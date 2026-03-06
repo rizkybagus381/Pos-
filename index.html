@@ -1,444 +1,527 @@
-import React, { useState, useMemo } from 'react';
-import { ShoppingCart, Printer, Trash2, Plus, Minus, Coffee, Utensils, Bluetooth, BluetoothConnected, PlusCircle, X } from 'lucide-react';
-
-// Data produk bawaan awal
-const INITIAL_PRODUCTS = [
-  { id: 1, name: 'Nasi Goreng Spesial', price: 25000, category: 'makanan' },
-  { id: 2, name: 'Es Teh Manis', price: 5000, category: 'minuman' },
-];
-
-export default function App() {
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [cart, setCart] = useState([]);
-  const [filter, setFilter] = useState('semua');
-  
-  // State untuk Modal Tambah Produk
-  const [showModal, setShowModal] = useState(false);
-  const [newProductName, setNewProductName] = useState('');
-  const [newProductPrice, setNewProductPrice] = useState('');
-  const [newProductCat, setNewProductCat] = useState('makanan');
-
-  // State untuk Bluetooth
-  const [printerDevice, setPrinterDevice] = useState(null);
-  const [printerCharacteristic, setPrinterCharacteristic] = useState(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  // Format angka ke Rupiah
-  const formatRupiah = (number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(number);
-  };
-
-  // --- MANAJEMEN PRODUK ---
-  const handleAddProduct = (e) => {
-    e.preventDefault();
-    if (!newProductName || !newProductPrice) return;
-    
-    const newProduct = {
-      id: Date.now(), // Generate ID unik
-      name: newProductName,
-      price: parseInt(newProductPrice),
-      category: newProductCat
-    };
-    
-    setProducts([...products, newProduct]);
-    setNewProductName('');
-    setNewProductPrice('');
-    setShowModal(false);
-  };
-
-  // --- MANAJEMEN KERANJANG ---
-  const addToCart = (product) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map(item =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-        );
-      }
-      return [...prevCart, { ...product, qty: 1 }];
-    });
-  };
-
-  const updateQty = (id, delta) => {
-    setCart(prevCart => prevCart.map(item => {
-      if (item.id === id) {
-        const newQty = item.qty + delta;
-        return newQty > 0 ? { ...item, qty: newQty } : item;
-      }
-      return item;
-    }));
-  };
-
-  const clearCart = () => {
-    if(window.confirm('Apakah Anda yakin ingin mengosongkan keranjang?')) {
-      setCart([]);
-    }
-  };
-
-  const totalPrice = useMemo(() => {
-    return cart.reduce((total, item) => total + (item.price * item.qty), 0);
-  }, [cart]);
-
-  const filteredProducts = useMemo(() => {
-    if (filter === 'semua') return products;
-    return products.filter(p => p.category === filter);
-  }, [filter, products]);
-
-  // --- KONEKSI BLUETOOTH PRINTER ---
-  const connectBluetooth = async () => {
-    if (!navigator.bluetooth) {
-      alert("Browser Anda tidak mendukung Web Bluetooth. Gunakan Google Chrome di Android/PC.");
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      // Mencari device bluetooth dengan service UUID printer thermal umum
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [
-          '000018f0-0000-1000-8000-00805f9b34fb', // Standard BLE POS
-          'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Printer China 58mm
-          '0000fee7-0000-1000-8000-00805f9b34fb'  // Alternatif lain
-        ]
-      });
-
-      const server = await device.gatt.connect();
-      
-      // Coba mencari service yang cocok
-      const services = await server.getPrimaryServices();
-      let characteristic = null;
-
-      for (const service of services) {
-        const characteristics = await service.getCharacteristics();
-        for (const char of characteristics) {
-          if (char.properties.write || char.properties.writeWithoutResponse) {
-            characteristic = char;
-            break;
-          }
-        }
-        if (characteristic) break;
-      }
-
-      if (characteristic) {
-        setPrinterDevice(device);
-        setPrinterCharacteristic(characteristic);
-        alert("Printer Bluetooth Berhasil Tersambung!");
-      } else {
-        alert("Gagal menemukan layanan cetak pada perangkat ini.");
-      }
-    } catch (error) {
-      console.error("Bluetooth Error:", error);
-      alert("Koneksi dibatalkan atau gagal: " + error.message);
-    }
-    setIsConnecting(false);
-  };
-
-  // --- FUNGSI CETAK ---
-  const handlePrint = async () => {
-    if (cart.length === 0) {
-      alert("Keranjang masih kosong!");
-      return;
-    }
-
-    const currentDate = new Date().toLocaleString('id-ID');
-
-    // JIKA BLUETOOTH TERSAMBUNG -> Cetak langsung via ESC/POS (Tanpa Dialog)
-    if (printerCharacteristic) {
-      try {
-        const encoder = new TextEncoder();
-        let receipt = "";
-        
-        // Perintah ESC/POS (Initialize & Center align)
-        receipt += "\x1B\x40"; // Init
-        receipt += "\x1B\x61\x01"; // Center align
-        receipt += "KASIRKU RESTO\n";
-        receipt += "Jl. Contoh Jalan No. 123\n";
-        receipt += `Waktu: ${currentDate}\n`;
-        receipt += "--------------------------------\n"; // 32 Karakter utk 58mm
-        
-        // Left align untuk item
-        receipt += "\x1B\x61\x00"; 
-        cart.forEach(item => {
-          receipt += `${item.name}\n`;
-          let line2 = `${item.qty} x ${item.price}`;
-          let totalItem = `${item.qty * item.price}`;
-          let spaces = 32 - line2.length - totalItem.length;
-          receipt += line2 + " ".repeat(Math.max(1, spaces)) + totalItem + "\n";
-        });
-        
-        receipt += "--------------------------------\n";
-        
-        // Total
-        let strTotal = `TOTAL: Rp ${totalPrice.toLocaleString('id-ID')}`;
-        receipt += " ".repeat(Math.max(0, 32 - strTotal.length)) + strTotal + "\n";
-        
-        // Footer (Center)
-        receipt += "\x1B\x61\x01";
-        receipt += "Terima Kasih Atas Kunjungan Anda\n";
-        receipt += "\x0A\x0A\x0A"; // Feed 3 lines biar bisa disobek
-
-        const data = encoder.encode(receipt);
-        
-        // Kirim data ke printer dalam potongan kecil (batas BLE)
-        for (let i = 0; i < data.length; i += 512) {
-          await printerCharacteristic.writeValue(data.slice(i, i + 512));
-        }
-        
-        // Kosongkan keranjang setelah cetak sukses
-        setCart([]);
-        return;
-      } catch (error) {
-        console.error("Gagal mencetak via Bluetooth:", error);
-        alert("Gagal mencetak ke Bluetooth. Menggunakan cetak browser cadangan...");
-      }
-    }
-
-    // JIKA BLUETOOTH TIDAK ADA / GAGAL -> Fallback ke Cetak Browser biasa
-    window.print();
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 font-sans text-gray-800">
-      
-      {/* CSS Khusus Print Browser (Fallback jika Bluetooth mati) */}
-      <style>{`
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KasirKu Pintar</title>
+    <!-- Tailwind CSS untuk Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Khusus untuk Struk Print (Hanya aktif saat mencetak) */
         @media print {
-          body * { visibility: hidden; }
-          #printable-receipt, #printable-receipt * { visibility: visible; }
-          #printable-receipt {
-            position: absolute; left: 0; top: 0;
-            width: 58mm; padding: 0; margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px; color: black;
-          }
-          .hide-on-print { display: none !important; }
+            body * {
+                visibility: hidden;
+            }
+            #printable-receipt, #printable-receipt * {
+                visibility: visible;
+            }
+            #printable-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm; /* Ukuran standar printer thermal kecil */
+                padding: 0;
+                margin: 0;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 12px;
+                color: black;
+            }
+            .hide-on-print {
+                display: none !important;
+            }
         }
-      `}</style>
-
-      {/* --- UI UTAMA --- */}
-      <div className="flex flex-col md:flex-row h-screen hide-on-print relative">
         
-        {/* Kiri: Daftar Produk & Header */}
-        <div className="w-full md:w-2/3 p-4 flex flex-col h-full overflow-hidden">
-          
-          {/* Header & Tombol Aksi */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <h1 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
-              <Utensils className="h-6 w-6" /> KasirKu Pintar
-            </h1>
-            
-            <div className="flex flex-wrap gap-2">
-              {/* Tombol Bluetooth */}
-              <button 
-                onClick={connectBluetooth}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white transition-all shadow-sm
-                  ${printerDevice ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                {printerDevice ? <BluetoothConnected className="h-4 w-4" /> : <Bluetooth className="h-4 w-4" />}
-                {isConnecting ? 'Menyambungkan...' : (printerDevice ? 'Printer Tersambung' : 'Koneksi Printer')}
-              </button>
+        /* Animasi klik */
+        .active-scale:active {
+            transform: scale(0.95);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 h-screen overflow-hidden">
 
-              {/* Tombol Tambah Produk */}
-              <button 
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-sm"
-              >
-                <PlusCircle className="h-4 w-4" /> Tambah Barang
-              </button>
+    <!-- ANTARMUKA UTAMA -->
+    <div class="flex flex-col md:flex-row h-full hide-on-print">
+        
+        <!-- Kiri: Daftar Produk -->
+        <div class="w-full md:w-2/3 p-4 flex flex-col h-full overflow-hidden">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <h1 class="text-2xl font-bold text-blue-700 flex items-center gap-2">
+                    <i class="fa-solid fa-utensils"></i> KasirKu Pintar
+                </h1>
+                
+                <div class="flex flex-wrap gap-2">
+                    <!-- Tombol Bluetooth -->
+                    <button id="btn-bluetooth" onclick="connectBluetooth()" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm active-scale">
+                        <i id="icon-bluetooth" class="fa-brands fa-bluetooth-b"></i>
+                        <span id="text-bluetooth">Koneksi Printer</span>
+                    </button>
+
+                    <!-- Tombol Tambah Produk -->
+                    <button onclick="openModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-sm active-scale">
+                        <i class="fa-solid fa-circle-plus"></i> Tambah Menu
+                    </button>
+                </div>
             </div>
-          </div>
 
-          {/* Filter Kategori */}
-          <div className="flex gap-2 mb-4">
-            {['semua', 'makanan', 'minuman'].map(cat => (
-              <button 
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${filter === cat ? 'bg-gray-800 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-200 border border-gray-200'}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+            <!-- Filter Kategori -->
+            <div class="flex gap-2 mb-4" id="filter-container">
+                <button onclick="setFilter('semua')" class="filter-btn px-4 py-2 rounded-lg font-medium capitalize transition-colors bg-gray-800 text-white shadow-md border border-gray-800" data-cat="semua">Semua</button>
+                <button onclick="setFilter('makanan')" class="filter-btn px-4 py-2 rounded-lg font-medium capitalize transition-colors bg-white text-gray-600 hover:bg-gray-200 border border-gray-200" data-cat="makanan">Makanan</button>
+                <button onclick="setFilter('minuman')" class="filter-btn px-4 py-2 rounded-lg font-medium capitalize transition-colors bg-white text-gray-600 hover:bg-gray-200 border border-gray-200" data-cat="minuman">Minuman</button>
+            </div>
 
-          {/* Grid Produk */}
-          <div className="flex-1 overflow-y-auto pr-2">
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
-              {filteredProducts.map(product => (
-                <button
-                  key={product.id}
-                  onClick={() => addToCart(product)}
-                  className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 hover:border-blue-400 transition-all flex flex-col items-center text-center group active:scale-95"
-                >
-                  <div className={`p-3 rounded-full mb-3 transition-colors ${product.category === 'makanan' ? 'bg-orange-50 text-orange-600 group-hover:bg-orange-100' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100'}`}>
-                    {product.category === 'makanan' ? <Utensils className="h-8 w-8" /> : <Coffee className="h-8 w-8" />}
-                  </div>
-                  <h3 className="font-semibold text-gray-800 text-sm mb-1 leading-tight h-10">{product.name}</h3>
-                  <p className="text-gray-800 font-bold bg-gray-50 px-2 py-1 rounded-md w-full">{formatRupiah(product.price)}</p>
+            <!-- Grid Produk -->
+            <div class="flex-1 overflow-y-auto pr-2 pb-20">
+                <div id="product-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Produk akan dirender di sini oleh JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanan: Keranjang Pesanan -->
+        <div class="w-full md:w-1/3 bg-white border-l border-gray-200 flex flex-col h-full shadow-2xl z-10">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800">
+                    <i class="fa-solid fa-cart-shopping text-blue-600"></i> Pesanan (<span id="cart-count">0</span>)
+                </h2>
+                <button onclick="clearCart()" id="btn-clear" class="hidden text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md">
+                    <i class="fa-solid fa-trash-can"></i> Kosongkan
                 </button>
-              ))}
             </div>
-          </div>
-        </div>
 
-        {/* Kanan: Keranjang Pesanan */}
-        <div className="w-full md:w-1/3 bg-white border-l border-gray-200 flex flex-col h-full shadow-2xl z-10">
-          <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-blue-600" /> Pesanan ({cart.length})
-            </h2>
-            {cart.length > 0 && (
-              <button onClick={clearCart} className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md">
-                <Trash2 className="h-4 w-4"/> Kosongkan
-              </button>
-            )}
-          </div>
-
-          {/* Daftar Item */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                <ShoppingCart className="h-16 w-16 mb-4 opacity-20" />
-                <p>Klik produk untuk menambah pesanan</p>
-              </div>
-            ) : (
-              cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-3">
-                  <div className="flex-1 pr-2">
-                    <h4 className="font-semibold text-sm truncate">{item.name}</h4>
-                    <p className="text-blue-600 font-medium text-xs">{formatRupiah(item.price)}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-gray-100 rounded-lg border border-gray-200">
-                      <button onClick={() => updateQty(item.id, -1)} className="p-1 hover:text-blue-600 hover:bg-gray-200 rounded-l-lg transition-colors">
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <span className="w-6 text-center font-bold text-sm bg-white py-1">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="p-1 hover:text-blue-600 hover:bg-gray-200 rounded-r-lg transition-colors">
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
+            <!-- Daftar Item -->
+            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Status Kosong (Default) -->
+                <div id="empty-cart-msg" class="h-full flex flex-col items-center justify-center text-gray-400">
+                    <i class="fa-solid fa-cart-shopping text-6xl mb-4 opacity-20"></i>
+                    <p>Klik menu untuk menambah pesanan</p>
                 </div>
-              ))
-            )}
-          </div>
-
-          {/* Total & Bayar */}
-          <div className="p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-between items-center mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
-              <span className="text-gray-600 font-bold">Total Pembayaran</span>
-              <span className="text-2xl font-black text-blue-700">{formatRupiah(totalPrice)}</span>
+                <!-- Item Keranjang akan muncul di sini -->
             </div>
-            <button
-              onClick={handlePrint}
-              disabled={cart.length === 0}
-              className={`w-full py-4 rounded-xl font-bold text-lg flex justify-center items-center gap-2 transition-all shadow-md
-                ${cart.length === 0 
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' 
-                  : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg active:scale-95'
-                }`}
-            >
-              <Printer className="h-6 w-6" /> 
-              {printerDevice ? 'Cetak ke Bluetooth' : 'Bayar & Cetak Struk'}
-            </button>
-          </div>
-        </div>
 
-        {/* MODAL: Tambah Produk Baru */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-              <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
-                <h3 className="font-bold text-lg text-gray-800">Tambah Barang Baru</h3>
-                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full shadow-sm">
-                  <X className="h-5 w-5" />
+            <!-- Total & Bayar -->
+            <div class="p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div class="flex justify-between items-center mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <span class="text-gray-600 font-bold">Total Pembayaran</span>
+                    <span id="total-price" class="text-2xl font-black text-blue-700">Rp 0</span>
+                </div>
+                <button id="btn-pay" onclick="handlePrint()" disabled class="w-full py-4 rounded-xl font-bold text-lg flex justify-center items-center gap-2 transition-all shadow-none bg-gray-200 text-gray-400 cursor-not-allowed">
+                    <i class="fa-solid fa-print"></i> 
+                    <span id="text-pay">Bayar & Cetak Struk</span>
                 </button>
-              </div>
-              <form onSubmit={handleAddProduct} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Barang</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={newProductName}
-                    onChange={(e) => setNewProductName(e.target.value)}
-                    placeholder="Contoh: Ayam Geprek"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Harga (Rp)</label>
-                  <input 
-                    type="number" 
-                    required
-                    value={newProductPrice}
-                    onChange={(e) => setNewProductPrice(e.target.value)}
-                    placeholder="Contoh: 15000"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Kategori</label>
-                  <select 
-                    value={newProductCat}
-                    onChange={(e) => setNewProductCat(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                  >
-                    <option value="makanan">Makanan</option>
-                    <option value="minuman">Minuman</option>
-                  </select>
-                </div>
-                <div className="pt-2">
-                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95">
-                    Simpan Barang
-                  </button>
-                </div>
-              </form>
             </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* --- STRUK CETAK (Fallback Print Browser) --- */}
-      <div id="printable-receipt" className="hidden">
-        <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-          <h2 style={{ margin: '0 0 5px 0', fontSize: '16px' }}>KASIRKU RESTO</h2>
-          <p style={{ margin: '0', fontSize: '10px' }}>Jl. Contoh Jalan No. 123</p>
-          <div style={{ borderBottom: '1px dashed #000', margin: '10px 0' }}></div>
-          <p style={{ margin: '0', fontSize: '10px', textAlign: 'left' }}>Waktu: {new Date().toLocaleString('id-ID')}</p>
-          <div style={{ borderBottom: '1px dashed #000', margin: '10px 0' }}></div>
         </div>
-        <div style={{ marginBottom: '10px' }}>
-          {cart.map((item, index) => (
-            <div key={index} style={{ marginBottom: '5px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{item.name}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                <span>{item.qty} x {item.price.toLocaleString('id-ID')}</span>
-                <span>{(item.qty * item.price).toLocaleString('id-ID')}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ borderTop: '1px dashed #000', paddingTop: '5px', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px' }}>
-            <span>TOTAL:</span>
-            <span>Rp {totalPrice.toLocaleString('id-ID')}</span>
-          </div>
-        </div>
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '10px' }}>
-          <p style={{ margin: '0' }}>Terima Kasih Atas Kunjungan Anda</p>
-        </div>
-      </div>
-
     </div>
-  );
-}
+
+    <!-- MODAL: Tambah Produk Baru -->
+    <div id="modal-add" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-lg text-gray-800">Tambah Menu Baru</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full shadow-sm">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <form id="form-add" onsubmit="handleAddProduct(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Barang</label>
+                    <input type="text" id="input-name" required placeholder="Contoh: Ayam Geprek" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Harga (Rp)</label>
+                    <input type="number" id="input-price" required placeholder="Contoh: 15000" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori</label>
+                    <select id="input-category" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white">
+                        <option value="makanan">Makanan</option>
+                        <option value="minuman">Minuman</option>
+                    </select>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-md active-scale">
+                        Simpan Menu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- STRUK CETAK (Fallback Print Browser) -->
+    <div id="printable-receipt" class="hidden">
+        <!-- Isi struk akan digenerate via JavaScript sebelum print -->
+    </div>
+
+    <!-- SCRIPT JAVASCRIPT MURNI -->
+    <script>
+        // Data Awal
+        let products = [
+            { id: 1, name: 'Nasi Goreng Spesial', price: 25000, category: 'makanan' },
+            { id: 2, name: 'Mie Goreng Seafood', price: 30000, category: 'makanan' },
+            { id: 3, name: 'Es Teh Manis', price: 5000, category: 'minuman' },
+            { id: 4, name: 'Kopi Susu Gula Aren', price: 18000, category: 'minuman' }
+        ];
+        
+        let cart = [];
+        let currentFilter = 'semua';
+        let printerDevice = null;
+        let printerCharacteristic = null;
+        let isConnecting = false;
+
+        // Utilitas Format Rupiah
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+            }).format(number);
+        };
+
+        // RENDER PRODUK
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            const filteredProducts = currentFilter === 'semua' 
+                ? products 
+                : products.filter(p => p.category === currentFilter);
+
+            filteredProducts.forEach(product => {
+                const isFood = product.category === 'makanan';
+                const iconClass = isFood ? 'fa-utensils' : 'fa-mug-hot';
+                const colorClass = isFood ? 'bg-orange-50 text-orange-600 group-hover:bg-orange-100' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100';
+
+                const cardHTML = `
+                    <button onclick="addToCart(${product.id})" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 hover:border-blue-400 transition-all flex flex-col items-center text-center group active-scale">
+                        <div class="p-3 rounded-full mb-3 transition-colors ${colorClass}">
+                            <i class="fa-solid ${iconClass} text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 text-sm mb-1 leading-tight h-10">${product.name}</h3>
+                        <p class="text-gray-800 font-bold bg-gray-50 px-2 py-1 rounded-md w-full">${formatRupiah(product.price)}</p>
+                    </button>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        // FILTER KATEGORI
+        function setFilter(category) {
+            currentFilter = category;
+            
+            // Update tampilan tombol filter
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if(btn.dataset.cat === category) {
+                    btn.className = "filter-btn px-4 py-2 rounded-lg font-medium capitalize transition-colors bg-gray-800 text-white shadow-md border border-gray-800";
+                } else {
+                    btn.className = "filter-btn px-4 py-2 rounded-lg font-medium capitalize transition-colors bg-white text-gray-600 hover:bg-gray-200 border border-gray-200";
+                }
+            });
+            
+            renderProducts();
+        }
+
+        // RENDER KERANJANG
+        function renderCart() {
+            const cartItemsDiv = document.getElementById('cart-items');
+            const emptyMsg = document.getElementById('empty-cart-msg');
+            const cartCount = document.getElementById('cart-count');
+            const totalPriceEl = document.getElementById('total-price');
+            const btnPay = document.getElementById('btn-pay');
+            const btnClear = document.getElementById('btn-clear');
+
+            // Hitung total harga & jumlah
+            let total = 0;
+            let totalItems = 0;
+            
+            cartItemsDiv.innerHTML = ''; // Bersihkan list
+
+            if (cart.length === 0) {
+                cartItemsDiv.appendChild(emptyMsg);
+                emptyMsg.style.display = 'flex';
+                btnClear.style.display = 'none';
+                
+                // Matikan tombol bayar
+                btnPay.disabled = true;
+                btnPay.className = "w-full py-4 rounded-xl font-bold text-lg flex justify-center items-center gap-2 transition-all shadow-none bg-gray-200 text-gray-400 cursor-not-allowed";
+            } else {
+                emptyMsg.style.display = 'none';
+                btnClear.style.display = 'flex';
+                
+                // Nyalakan tombol bayar
+                btnPay.disabled = false;
+                btnPay.className = "w-full py-4 rounded-xl font-bold text-lg flex justify-center items-center gap-2 transition-all shadow-md bg-green-600 text-white hover:bg-green-700 hover:shadow-lg active-scale";
+
+                cart.forEach(item => {
+                    total += (item.price * item.qty);
+                    totalItems += item.qty;
+
+                    const itemHTML = `
+                        <div class="flex justify-between items-center border-b border-gray-50 pb-3">
+                            <div class="flex-1 pr-2">
+                                <h4 class="font-semibold text-sm truncate">${item.name}</h4>
+                                <p class="text-blue-600 font-medium text-xs">${formatRupiah(item.price)}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center bg-gray-100 rounded-lg border border-gray-200">
+                                    <button onclick="updateQty(${item.id}, -1)" class="p-2 hover:text-blue-600 hover:bg-gray-200 rounded-l-lg transition-colors">
+                                        <i class="fa-solid fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="w-6 text-center font-bold text-sm bg-white py-1">${item.qty}</span>
+                                    <button onclick="updateQty(${item.id}, 1)" class="p-2 hover:text-blue-600 hover:bg-gray-200 rounded-r-lg transition-colors">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    cartItemsDiv.innerHTML += itemHTML;
+                });
+            }
+
+            cartCount.innerText = totalItems;
+            totalPriceEl.innerText = formatRupiah(total);
+        }
+
+        // AKSI KERANJANG
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function updateQty(productId, delta) {
+            const itemIndex = cart.findIndex(item => item.id === productId);
+            if (itemIndex > -1) {
+                cart[itemIndex].qty += delta;
+                if (cart[itemIndex].qty <= 0) {
+                    cart.splice(itemIndex, 1); // Hapus jika 0
+                }
+            }
+            renderCart();
+        }
+
+        function clearCart() {
+            if(confirm('Apakah Anda yakin ingin mengosongkan keranjang?')) {
+                cart = [];
+                renderCart();
+            }
+        }
+
+        // MODAL TAMBAH PRODUK
+        function openModal() {
+            document.getElementById('modal-add').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-add').classList.add('hidden');
+            document.getElementById('form-add').reset();
+        }
+
+        function handleAddProduct(event) {
+            event.preventDefault();
+            const name = document.getElementById('input-name').value;
+            const price = parseInt(document.getElementById('input-price').value);
+            const category = document.getElementById('input-category').value;
+
+            if (name && price) {
+                products.push({
+                    id: Date.now(),
+                    name: name,
+                    price: price,
+                    category: category
+                });
+                closeModal();
+                renderProducts(); // Refresh list produk
+            }
+        }
+
+        // BLUETOOTH PRINTER LOGIC
+        async function connectBluetooth() {
+            if (!navigator.bluetooth) {
+                alert("Browser ini tidak mendukung Bluetooth Web. Gunakan Chrome di Android/PC.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-bluetooth');
+            const icon = document.getElementById('icon-bluetooth');
+            const text = document.getElementById('text-bluetooth');
+            const textPay = document.getElementById('text-pay');
+
+            text.innerText = "Menyambungkan...";
+            
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [
+                        '000018f0-0000-1000-8000-00805f9b34fb', // Standard BLE POS
+                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Printer China 58mm
+                        '0000fee7-0000-1000-8000-00805f9b34fb'  // Alternatif
+                    ]
+                });
+
+                const server = await device.gatt.connect();
+                const services = await server.getPrimaryServices();
+                let characteristic = null;
+
+                for (const service of services) {
+                    const characteristics = await service.getCharacteristics();
+                    for (const char of characteristics) {
+                        if (char.properties.write || char.properties.writeWithoutResponse) {
+                            characteristic = char;
+                            break;
+                        }
+                    }
+                    if (characteristic) break;
+                }
+
+                if (characteristic) {
+                    printerDevice = device;
+                    printerCharacteristic = characteristic;
+                    
+                    // Update UI Button
+                    btn.className = "flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-all shadow-sm active-scale";
+                    icon.className = "fa-solid fa-link";
+                    text.innerText = "Tersambung";
+                    textPay.innerText = "Cetak ke Bluetooth";
+                    
+                    alert("Printer Bluetooth Berhasil Tersambung!");
+                } else {
+                    throw new Error("Gagal menemukan layanan cetak.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Koneksi gagal atau dibatalkan: " + error.message);
+                text.innerText = "Koneksi Printer";
+            }
+        }
+
+        // CETAK STRUK LOGIC (BLUETOOTH ATAU BROWSER PRINT)
+        async function handlePrint() {
+            if (cart.length === 0) return;
+
+            const currentDate = new Date().toLocaleString('id-ID');
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            // JIKA BLUETOOTH TERSAMBUNG -> Cetak Langsung via Bluetooth ESC/POS
+            if (printerCharacteristic) {
+                try {
+                    let receipt = "";
+                    // ESC/POS Commands
+                    receipt += "\x1B\x40"; // Initialize
+                    receipt += "\x1B\x61\x01"; // Align Center
+                    receipt += "KASIRKU RESTO\n";
+                    receipt += "Jl. Contoh Jalan No. 123\n";
+                    receipt += `Waktu: ${currentDate}\n`;
+                    receipt += "--------------------------------\n";
+                    
+                    receipt += "\x1B\x61\x00"; // Align Left
+                    cart.forEach(item => {
+                        receipt += `${item.name}\n`;
+                        let line2 = `${item.qty} x ${item.price}`;
+                        let totalItem = `${item.qty * item.price}`;
+                        let spaces = 32 - line2.length - totalItem.length;
+                        receipt += line2 + " ".repeat(Math.max(1, spaces)) + totalItem + "\n";
+                    });
+                    
+                    receipt += "--------------------------------\n";
+                    
+                    let strTotal = `TOTAL: Rp ${total.toLocaleString('id-ID')}`;
+                    receipt += " ".repeat(Math.max(0, 32 - strTotal.length)) + strTotal + "\n";
+                    
+                    receipt += "\x1B\x61\x01"; // Align Center
+                    receipt += "Terima Kasih\n";
+                    receipt += "\x0A\x0A\x0A"; // Feed 3 lines
+
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(receipt);
+                    
+                    // Chunking data (BLE MTU limits)
+                    for (let i = 0; i < data.length; i += 512) {
+                        await printerCharacteristic.writeValue(data.slice(i, i + 512));
+                    }
+                    
+                    cart = []; // Bersihkan keranjang setelah sukses
+                    renderCart();
+                    return; // Selesai
+                } catch (error) {
+                    console.error("Gagal print bluetooth:", error);
+                    alert("Koneksi Bluetooth terputus. Menggunakan cetak browser cadangan.");
+                }
+            }
+
+            // JIKA TIDAK ADA BLUETOOTH -> Buat HTML Struk & Panggil Dialog Print Browser
+            const receiptDiv = document.getElementById('printable-receipt');
+            
+            let receiptHTML = `
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <h2 style="margin: 0 0 5px 0; font-size: 16px;">KASIRKU RESTO</h2>
+                    <p style="margin: 0; font-size: 10px;">Jl. Contoh Jalan No. 123</p>
+                    <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
+                    <p style="margin: 0; font-size: 10px; text-align: left;">Waktu: ${currentDate}</p>
+                    <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
+                </div>
+                <div style="margin-bottom: 10px;">
+            `;
+
+            cart.forEach(item => {
+                receiptHTML += `
+                    <div style="margin-bottom: 5px;">
+                        <div style="font-size: 12px; font-weight: bold;">${item.name}</div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                            <span>${item.qty} x ${item.price.toLocaleString('id-ID')}</span>
+                            <span>${(item.qty * item.price).toLocaleString('id-ID')}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            receiptHTML += `
+                </div>
+                <div style="border-top: 1px dashed #000; padding-top: 5px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
+                        <span>TOTAL:</span>
+                        <span>Rp ${total.toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px; font-size: 10px;">
+                    <p style="margin: 0;">Terima Kasih Atas Kunjungan Anda</p>
+                </div>
+            `;
+
+            receiptDiv.innerHTML = receiptHTML;
+            window.print();
+        }
+
+        // INISIALISASI SAAT HALAMAN DIMUAT
+        window.onload = () => {
+            renderProducts();
+            renderCart();
+        };
+
+    </script>
+</body>
+</html>
 
