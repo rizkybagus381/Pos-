@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="ms">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -56,12 +56,12 @@
                 <i class="fa-solid fa-lock text-3xl"></i>
             </div>
             <h2 class="text-2xl font-black text-gray-800 mb-1">KasirKu</h2>
-            <p class="text-gray-500 mb-8 text-sm">Masukkan PIN Keamanan Anda</p>
+            <p class="text-gray-500 mb-8 text-sm">Masukkan PIN Keselamatan Anda</p>
             
             <form id="pin-form" onsubmit="window.checkPin(event)">
                 <input type="password" id="input-pin" class="w-full text-center text-3xl tracking-[0.5em] px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none mb-6 font-mono transition-all" placeholder="••••" required autocomplete="off">
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
-                    Buka Kasir <i class="fa-solid fa-arrow-right"></i>
+                    Buka Mesin Daftar Tunai <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
         </div>
@@ -76,7 +76,7 @@
             <!-- Indikator Loading Data -->
             <div id="loading-overlay" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center rounded-2xl m-3 md:m-4">
                 <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4 shadow-sm rounded-full bg-white"></i>
-                <p class="font-bold text-gray-800 text-lg">Menghubungkan ke Database...</p>
+                <p class="font-bold text-gray-800 text-lg">Menyambung ke Pangkalan Data...</p>
                 <p class="text-sm text-gray-500 mt-1">Mengambil data dari Firebase</p>
             </div>
 
@@ -88,17 +88,17 @@
                 
                 <div class="flex gap-2 w-full sm:w-auto">
                     <!-- Tombol Logout -->
-                    <button onclick="window.logoutPin()" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-red-100 hover:text-red-500 transition-all active-scale" title="Keluar">
+                    <button onclick="window.logoutPin()" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-red-100 hover:text-red-500 transition-all active-scale" title="Log Keluar">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                     <!-- Tombol Pengaturan Toko -->
-                    <button onclick="window.openSettingsModal()" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 transition-all active-scale" title="Pengaturan Toko">
+                    <button onclick="window.openSettingsModal()" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 transition-all active-scale" title="Tetapan Kedai">
                         <i class="fa-solid fa-gear"></i>
                     </button>
                     <!-- Tombol Bluetooth -->
                     <button id="btn-bluetooth" onclick="window.connectBluetooth()" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm active-scale text-sm">
                         <i id="icon-bluetooth" class="fa-brands fa-bluetooth-b"></i>
-                        <span id="text-bluetooth">Printer</span>
+                        <span id="text-bluetooth">Pencetak</span>
                     </button>
                     <!-- Tombol Tambah Menu -->
                     <button onclick="window.openModal()" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 rounded-lg font-medium bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-sm active-scale text-sm">
@@ -143,7 +143,7 @@
 
             <div class="flex-none p-3 md:p-4 bg-white border-t border-gray-200">
                 <div class="flex justify-between items-center mb-3 bg-gray-50 p-2 md:p-3 rounded-lg border border-gray-100">
-                    <span class="text-gray-600 font-bold text-sm md:text-base">Total Harga</span>
+                    <span class="text-gray-600 font-bold text-sm md:text-base">Jumlah Harga</span>
                     <span id="total-price" class="text-xl md:text-2xl font-black text-blue-700">Rp 0</span>
                 </div>
                 <button id="btn-pay" onclick="window.handlePrint()" disabled class="w-full py-3 md:py-4 rounded-xl font-bold text-base md:text-lg flex justify-center items-center gap-2 transition-all shadow-none bg-gray-200 text-gray-400 cursor-not-allowed no-select">
@@ -158,23 +158,23 @@
     <div id="modal-settings" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-gear text-blue-600 mr-2"></i> Pengaturan Toko</h3>
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-gear text-blue-600 mr-2"></i> Tetapan Kedai</h3>
                 <button onclick="window.closeSettingsModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
             <form id="form-settings" onsubmit="window.saveSettings(event)" class="p-5 space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Toko (Header Struk)</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kedai (Header Resit)</label>
                     <input type="text" id="input-store-name" required placeholder="Contoh: KASIRKU RESTO" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none uppercase" />
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Alamat Toko / Nomor HP</label>
-                    <textarea id="input-store-address" required rows="2" placeholder="Contoh: Jl. Sudirman No. 12, Medan" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none resize-none"></textarea>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Alamat Kedai / Nombor Telefon</label>
+                    <textarea id="input-store-address" required rows="2" placeholder="Contoh: Jl. Sudirman No. 12" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none resize-none"></textarea>
                 </div>
                 <div class="pt-2">
                     <button type="submit" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl active-scale flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Pengaturan
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Tetapan
                     </button>
                 </div>
             </form>
@@ -192,7 +192,7 @@
             </div>
             <form id="form-add" onsubmit="window.handleAddProduct(event)" class="p-5 space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Barang</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Barangan</label>
                     <input type="text" id="input-name" required placeholder="Contoh: Ayam Geprek" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
                 <div>
@@ -208,7 +208,7 @@
                 </div>
                 <div class="pt-2">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl active-scale">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Database
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Pangkalan Data
                     </button>
                 </div>
             </form>
@@ -222,10 +222,10 @@
                 <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500"></i>
             </div>
             <h3 class="font-bold text-xl text-gray-800 mb-2">Kosongkan Pesanan?</h3>
-            <p class="text-gray-500 mb-6 text-sm">Semua item akan dihapus dan tidak bisa dikembalikan.</p>
+            <p class="text-gray-500 mb-6 text-sm">Semua item akan dipadam dan tidak boleh dikembalikan.</p>
             <div class="flex gap-3">
                 <button onclick="window.closeConfirmModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 active-scale">Batal</button>
-                <button onclick="window.executeClearCart()" class="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 active-scale">Ya, Hapus</button>
+                <button onclick="window.executeClearCart()" class="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 active-scale">Ya, Padam</button>
             </div>
         </div>
     </div>
@@ -265,7 +265,7 @@
         let currentFilter = 'semua';
         let printerCharacteristic = null;
         
-        // Data Toko Default (akan tertimpa oleh data Firebase jika ada)
+        // Data Kedai Default
         let storeName = 'KASIRKU PINTAR';
         let storeAddress = 'Jl. Contoh Alamat No. 123';
 
@@ -280,10 +280,10 @@
                 sessionStorage.setItem('isKasirLoggedIn', 'true');
                 document.getElementById('pin-overlay').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
-                window.showToast("Berhasil masuk!", "success");
+                window.showToast("Berjaya log masuk!", "success");
                 initAuth(); 
             } else {
-                window.showToast("PIN Salah! Coba lagi.", "error");
+                window.showToast("PIN Salah! Sila cuba lagi.", "error");
                 document.getElementById('input-pin').value = '';
                 const form = document.getElementById('pin-form');
                 form.classList.add('translate-x-2');
@@ -322,24 +322,26 @@
         const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
 
         // ==========================================
-        // 2. KONEKSI FIREBASE (DATA MENU & TOKO)
+        // 2. KONEKSI FIREBASE (DATA MENU & KEDAI) - PUBLIC SYNC
         // ==========================================
         async function initAuth() {
             try { await signInAnonymously(auth); } 
-            catch (err) { document.getElementById('loading-overlay').innerHTML = `<p class="text-red-500 font-bold">Gagal terhubung ke Database</p>`; }
+            catch (err) { document.getElementById('loading-overlay').innerHTML = `<p class="text-red-500 font-bold">Gagal menyambung ke Pangkalan Data</p>`; }
         }
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                loadSettingsFromFirebase(); // Muat pengaturan toko dulu
-                loadProductsFromFirebase(); // Baru muat menu
+                // Panggil laluan "Public/Data" supaya semua peranti melihat data yang sama!
+                loadSettingsFromFirebase(); 
+                loadProductsFromFirebase(); 
             }
         });
 
-        // MUAT PENGATURAN TOKO (Realtime)
+        // MUAT PENGATURAN KEDAI (Sync Semua Peranti)
         function loadSettingsFromFirebase() {
-            const settingsRef = doc(db, 'artifacts', myAppId, 'users', currentUser.uid, 'settings', 'store_info');
+            // LALUAN DITUKAR KE RUANGAN AWAM (PUBLIC)
+            const settingsRef = doc(db, 'artifacts', myAppId, 'public', 'data', 'settings', 'store_info');
             onSnapshot(settingsRef, (docSnap) => {
                 if(docSnap.exists()) {
                     const data = docSnap.data();
@@ -347,18 +349,16 @@
                     storeAddress = data.address || 'Jl. Contoh Alamat No. 123';
                 }
                 
-                // Perbarui tampilan header dengan nama toko
                 document.getElementById('header-store-name').innerHTML = `<i class="fa-solid fa-store"></i> ${storeName}`;
-                
-                // Isi input modal pengaturan
                 document.getElementById('input-store-name').value = storeName;
                 document.getElementById('input-store-address').value = storeAddress;
             });
         }
 
-        // MUAT MENU (Realtime)
+        // MUAT MENU (Sync Semua Peranti)
         function loadProductsFromFirebase() {
-            const productsRef = collection(db, 'artifacts', myAppId, 'users', currentUser.uid, 'products');
+            // LALUAN DITUKAR KE RUANGAN AWAM (PUBLIC)
+            const productsRef = collection(db, 'artifacts', myAppId, 'public', 'data', 'products');
             onSnapshot(productsRef, (snapshot) => {
                 document.getElementById('loading-overlay').style.display = 'none';
 
@@ -396,13 +396,14 @@
             btnSubmit.disabled = true;
 
             try {
-                const docRef = doc(db, 'artifacts', myAppId, 'users', currentUser.uid, 'settings', 'store_info');
-                await setDoc(docRef, { name: name.toUpperCase(), address: address }); // Simpan ke Firebase
+                // SIMPAN KE LALUAN AWAM SUPAYA PERANTI LAIN BOLEH BACA
+                const docRef = doc(db, 'artifacts', myAppId, 'public', 'data', 'settings', 'store_info');
+                await setDoc(docRef, { name: name.toUpperCase(), address: address }); 
                 
                 window.closeSettingsModal();
-                window.showToast("Pengaturan toko berhasil diperbarui!", "success");
+                window.showToast("Tetapan kedai berjaya dikemaskini!", "success");
             } catch (error) {
-                window.showToast("Gagal menyimpan pengaturan", "error");
+                window.showToast("Gagal menyimpan tetapan", "error");
             } finally {
                 btnSubmit.innerHTML = oriText;
                 btnSubmit.disabled = false;
@@ -529,10 +530,11 @@
                 btnSubmit.disabled = true;
 
                 try {
-                    const docRef = doc(db, 'artifacts', myAppId, 'users', currentUser.uid, 'products', newProduct.id.toString());
+                    // SIMPAN KE LALUAN AWAM
+                    const docRef = doc(db, 'artifacts', myAppId, 'public', 'data', 'products', newProduct.id.toString());
                     await setDoc(docRef, newProduct);
                     window.closeModal(); 
-                    window.showToast("Menu berhasil tersimpan di Cloud!", "success");
+                    window.showToast("Menu berjaya disimpan di Pangkalan Data!", "success");
                 } catch (error) {
                     window.showToast("Gagal menyimpan data", "error");
                 } finally {
@@ -543,7 +545,7 @@
         };
 
         // ==========================================
-        // 4. PRINT STRUK MENGGUNAKAN NAMA TOKO
+        // 4. PENCETAKAN RESIT DENGAN NAMA KEDAI
         // ==========================================
         window.connectBluetooth = async function() {
             if (!navigator.bluetooth) { window.showToast("Gunakan Chrome PC/Android", "error"); return; }
@@ -565,9 +567,9 @@
                     document.getElementById('icon-bluetooth').className = "fa-solid fa-link";
                     document.getElementById('text-bluetooth').innerText = "Tersambung";
                     document.getElementById('text-pay').innerText = "Cetak ke Bluetooth";
-                    window.showToast("Printer Bluetooth Tersambung!", "success");
-                } else throw new Error("Gagal menemukan printer.");
-            } catch (err) { window.showToast("Batal menyambungkan", "error"); }
+                    window.showToast("Pencetak Bluetooth Tersambung!", "success");
+                } else throw new Error("Gagal mencari pencetak.");
+            } catch (err) { window.showToast("Batal menyambung", "error"); }
         };
 
         window.handlePrint = async function() {
@@ -575,10 +577,8 @@
             const currentDate = new Date().toLocaleString('id-ID');
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
 
-            // JIKA MENGGUNAKAN PRINTER BLUETOOTH
             if (printerCharacteristic) {
                 try {
-                    // Masukkan NAMA TOKO dan ALAMAT TOKO ke dalam struk Bluetooth
                     let receipt = "\x1B\x40\x1B\x61\x01" + storeName.toUpperCase() + "\n" + storeAddress + "\nWaktu: " + currentDate + "\n--------------------------------\n\x1B\x61\x00";
                     
                     cart.forEach(i => {
@@ -586,20 +586,17 @@
                         receipt += `${i.name}\n${l2}${" ".repeat(Math.max(1, 32 - l2.length - tot.length))}${tot}\n`;
                     });
                     
-                    let strTot = `TOTAL: Rp ${total.toLocaleString('id-ID')}`;
+                    let strTot = `JUMLAH: Rp ${total.toLocaleString('id-ID')}`;
                     receipt += `--------------------------------\n${" ".repeat(Math.max(0, 32 - strTot.length))}${strTot}\n\x1B\x61\x01Terima Kasih!\n\x0A\x0A\x0A`;
                     
                     const data = new TextEncoder().encode(receipt);
                     for (let i = 0; i < data.length; i += 512) await printerCharacteristic.writeValue(data.slice(i, i + 512));
-                    window.showToast("Struk berhasil dicetak!", "success");
+                    window.showToast("Resit berjaya dicetak!", "success");
                     cart = []; window.renderCart(); return;
-                } catch (e) { window.showToast("Printer terputus, menggunakan PDF", "error"); }
+                } catch (e) { window.showToast("Pencetak terputus, menggunakan PDF", "error"); }
             }
 
-            // JIKA MENGGUNAKAN CETAK BROWSER/PDF
             const div = document.getElementById('printable-receipt');
-            
-            // Masukkan NAMA TOKO dan ALAMAT TOKO ke HTML
             let html = `
                 <div style="text-align: center; margin-bottom: 10px;">
                     <h2 style="font-size: 16px; margin-bottom: 3px;">${storeName.toUpperCase()}</h2>
@@ -611,7 +608,7 @@
                 
             cart.forEach(i => html += `<div style="margin-bottom: 5px;"><b>${i.name}</b><div style="display:flex; justify-content:space-between;"><span>${i.qty} x ${i.price.toLocaleString('id-ID')}</span><span>${(i.qty * i.price).toLocaleString('id-ID')}</span></div></div>`);
             
-            html += `<hr><div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:5px;"><span>TOTAL:</span><span>Rp ${total.toLocaleString('id-ID')}</span></div><p style="text-align:center; margin-top:20px;">Terima Kasih!</p>`;
+            html += `<hr><div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:5px;"><span>JUMLAH:</span><span>Rp ${total.toLocaleString('id-ID')}</span></div><p style="text-align:center; margin-top:20px;">Terima Kasih!</p>`;
             
             div.innerHTML = html;
             window.onafterprint = () => { window.onafterprint = null; cart = []; window.renderCart(); };
