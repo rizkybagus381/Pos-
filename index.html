@@ -49,7 +49,7 @@
 </head>
 <body>
 
-    <!-- === LAYAR LOGIN PIN === -->
+    <!-- === LAYAR LOGIN PIN AWAL === -->
     <div id="pin-overlay" class="fixed inset-0 bg-blue-700 z-[100] flex flex-col items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center transform transition-all">
             <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -87,24 +87,19 @@
                 </h1>
                 
                 <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <!-- Tombol Logout -->
                     <button onclick="window.logoutPin()" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-red-100 hover:text-red-500 transition-all active-scale" title="Keluar">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
-                    <!-- Tombol Pengaturan Toko -->
                     <button onclick="window.openSettingsModal()" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 transition-all active-scale" title="Pengaturan Toko">
                         <i class="fa-solid fa-gear"></i>
                     </button>
-                    <!-- Tombol Riwayat Pesanan -->
-                    <button onclick="window.openHistoryModal()" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-purple-100 hover:text-purple-600 transition-all active-scale" title="Riwayat Pesanan">
+                    <button onclick="window.openHistoryModal()" class="flex items-center justify-center w-10 h-10 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-all active-scale shadow-sm" title="Riwayat Pesanan">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </button>
-                    <!-- Tombol Bluetooth -->
                     <button id="btn-bluetooth" onclick="window.connectBluetooth()" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm active-scale text-sm">
                         <i id="icon-bluetooth" class="fa-brands fa-bluetooth-b"></i>
                         <span id="text-bluetooth">Printer</span>
                     </button>
-                    <!-- Tombol Tambah Menu -->
                     <button onclick="window.openModal()" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 rounded-lg font-medium bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-sm active-scale text-sm">
                         <i class="fa-solid fa-circle-plus"></i> Menu
                     </button>
@@ -185,7 +180,7 @@
         </div>
     </div>
 
-    <!-- === MODAL TAMBAH PRODUK (DENGAN GAMBAR) === -->
+    <!-- === MODAL TAMBAH PRODUK (GAMBAR) === -->
     <div id="modal-add" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90dvh]">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50 flex-none">
@@ -196,8 +191,6 @@
             </div>
             <div class="overflow-y-auto flex-1 p-5">
                 <form id="form-add" onsubmit="window.handleAddProduct(event)" class="space-y-4">
-                    
-                    <!-- Upload Gambar -->
                     <div class="flex flex-col items-center justify-center">
                         <label class="block text-sm font-semibold text-gray-700 mb-2 w-full text-left">Foto Menu (Opsional)</label>
                         <div class="w-32 h-32 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors relative overflow-hidden" onclick="document.getElementById('input-image').click()">
@@ -209,7 +202,6 @@
                         </div>
                         <input type="file" id="input-image" accept="image/*" class="hidden" onchange="window.previewImage(event)" />
                     </div>
-
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Barang</label>
                         <input type="text" id="input-name" required placeholder="Contoh: Ayam Geprek" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" />
@@ -244,18 +236,34 @@
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
-            <!-- Area Daftar History -->
             <div class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-3" id="history-list">
-                <!-- Data History akan muncul di sini -->
                 <div class="text-center text-gray-400 py-10">Memuat riwayat...</div>
             </div>
-            <!-- Footer History -->
             <div class="flex-none p-4 border-t border-gray-100 bg-white">
-                <div class="flex justify-between font-bold text-gray-800">
+                <div class="flex justify-between font-bold text-gray-800 text-lg">
                     <span>Total Pendapatan:</span>
                     <span id="history-total-revenue" class="text-green-600">Rp 0</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- === MODAL OTORISASI VOID (PIN 1234) === -->
+    <div id="modal-void-auth" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden flex items-center justify-center z-[60] p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center transform transition-all">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-red-50">
+                <i class="fa-solid fa-ban text-3xl text-red-600"></i>
+            </div>
+            <h3 class="font-bold text-xl text-gray-800 mb-1">Otorisasi Void</h3>
+            <p class="text-gray-500 mb-6 text-sm">Masukkan PIN untuk membatalkan pesanan ini.</p>
+            
+            <form id="form-void-pin" onsubmit="window.executeVoidOrder(event)">
+                <input type="password" id="input-void-pin" class="w-full text-center text-2xl tracking-[0.5em] px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:ring-4 focus:ring-red-500/20 outline-none mb-6 font-mono transition-all" placeholder="••••" required autocomplete="off">
+                <div class="flex gap-3">
+                    <button type="button" onclick="window.closeVoidModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 active-scale">Batal</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 active-scale shadow-md">Proses Void</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -299,7 +307,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, addDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // CONFIG FIREBASE ANDA
         const firebaseConfig = {
@@ -319,14 +327,15 @@
         
         let currentUser = null;
         let products = [];
-        let ordersHistory = []; // Array untuk menyimpan riwayat pesanan
+        let ordersHistory = []; 
         let cart = [];
         let currentFilter = 'semua';
         let printerCharacteristic = null;
         let storeName = 'KASIRKU PINTAR';
         let storeAddress = 'Jl. Contoh Alamat No. 123';
         let productToDelete = null;
-        let selectedImageBase64 = null; // Menyimpan gambar yang dikompres
+        let selectedImageBase64 = null; 
+        let orderToVoid = null; // Menyimpan ID pesanan yang akan di-void
 
         // ==========================================
         // 1. SISTEM LOGIN & TOAST
@@ -385,7 +394,7 @@
                 currentUser = user;
                 loadSettingsFromFirebase(); 
                 loadProductsFromFirebase(); 
-                loadHistoryFromFirebase(); // Muat History
+                loadHistoryFromFirebase();
             }
         });
 
@@ -406,18 +415,16 @@
                 document.getElementById('loading-overlay').style.display = 'none';
                 products = [];
                 snapshot.forEach(doc => { products.push(doc.data()); });
-                products.sort((a, b) => b.id - a.id); // Terkini di atas
+                products.sort((a, b) => b.id - a.id);
                 window.renderProducts();
             });
         }
 
-        // AMBIL HISTORY PESANAN
         function loadHistoryFromFirebase() {
             const ordersRef = collection(db, 'artifacts', myAppId, 'public', 'data', 'orders');
             onSnapshot(ordersRef, (snapshot) => {
                 ordersHistory = [];
                 snapshot.forEach(doc => { ordersHistory.push(doc.data()); });
-                // Urutkan dari yang terbaru
                 ordersHistory.sort((a, b) => b.timestamp - a.timestamp);
                 window.renderHistory();
             });
@@ -426,12 +433,9 @@
         // ==========================================
         // 3. LOGIKA GAMBAR & TAMBAH MENU
         // ==========================================
-        
-        // Fitur Kompres Gambar agar tidak berat di Database
         window.previewImage = function(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = function(e) {
@@ -439,18 +443,13 @@
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 300; // Kompres maksimal lebar 300px
+                    const MAX_WIDTH = 300; 
                     const scaleSize = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scaleSize;
-
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // Simpan sebagai Base64 JPEG kualitas 60%
                     selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
-
-                    // Tampilkan Preview
                     document.getElementById('image-placeholder').classList.add('hidden');
                     const imgPreview = document.getElementById('image-preview');
                     imgPreview.src = selectedImageBase64;
@@ -462,21 +461,12 @@
         window.handleAddProduct = async function(e) {
             e.preventDefault(); 
             if (!currentUser) return;
-
             const name = document.getElementById('input-name').value;
             const price = parseInt(document.getElementById('input-price').value);
             const category = document.getElementById('input-category').value;
             
             if (name && price > 0) {
-                // Masukkan gambar jika ada
-                const newProduct = { 
-                    id: Date.now(), 
-                    name, 
-                    price, 
-                    category,
-                    image: selectedImageBase64 || null // Simpan string gambar
-                };
-                
+                const newProduct = { id: Date.now(), name, price, category, image: selectedImageBase64 || null };
                 const btnSubmit = e.target.querySelector('button[type="submit"]');
                 const oriText = btnSubmit.innerHTML;
                 btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan...`;
@@ -486,12 +476,8 @@
                     await setDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'products', newProduct.id.toString()), newProduct);
                     window.closeModal(); 
                     window.showToast("Menu berjaya disimpan!", "success");
-                } catch (error) {
-                    window.showToast("Gagal menyimpan data", "error");
-                } finally {
-                    btnSubmit.innerHTML = oriText;
-                    btnSubmit.disabled = false;
-                }
+                } catch (error) { window.showToast("Gagal menyimpan data", "error"); } 
+                finally { btnSubmit.innerHTML = oriText; btnSubmit.disabled = false; }
             }
         };
 
@@ -517,7 +503,6 @@
                 const iconClass = isFood ? 'fa-utensils' : 'fa-mug-hot';
                 const colorClass = isFood ? 'bg-orange-50 text-orange-600 group-hover:bg-orange-100' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100';
 
-                // Tampilkan gambar jika ada, jika tidak pakai ikon bawaan
                 const imageOrIcon = product.image 
                     ? `<img src="${product.image}" alt="${product.name}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-full mb-2 shadow-sm border border-gray-100" />`
                     : `<div class="p-3 w-16 h-16 md:w-20 md:h-20 rounded-full mb-2 flex items-center justify-center transition-colors ${colorClass}"><i class="fa-solid ${iconClass} text-2xl md:text-3xl"></i></div>`;
@@ -527,7 +512,6 @@
                         <button onclick="event.stopPropagation(); window.openDeleteProductModal(${product.id})" class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full hover:bg-red-100 hover:text-red-500 transition-colors z-10 active-scale shadow-sm" title="Hapus Menu">
                             <i class="fa-solid fa-trash-can text-[10px] pointer-events-none"></i>
                         </button>
-                        
                         <div onclick="window.addToCart(${product.id})" class="p-3 md:p-4 w-full h-full flex flex-col items-center text-center cursor-pointer active-scale pt-6">
                             ${imageOrIcon}
                             <h3 class="font-semibold text-gray-800 text-xs md:text-sm mb-1 h-8 md:h-10 line-clamp-2">${product.name}</h3>
@@ -582,7 +566,7 @@
         };
 
         // ==========================================
-        // 5. RIWAYAT PESANAN (HISTORY)
+        // 5. RIWAYAT PESANAN (HISTORY) & VOID
         // ==========================================
         window.openHistoryModal = function() { 
             document.getElementById('modal-history').classList.remove('hidden'); 
@@ -600,29 +584,83 @@
                 listDiv.innerHTML = `<div class="text-center text-gray-400 py-10 flex flex-col items-center"><i class="fa-solid fa-receipt text-4xl mb-3 opacity-30"></i><p>Belum ada riwayat penjualan.</p></div>`;
             } else {
                 ordersHistory.forEach(order => {
-                    totalRevenue += order.total;
+                    const isVoided = order.status === 'voided';
+                    if (!isVoided) {
+                        totalRevenue += order.total; // Hitung pendapatan jika TIDAK VOID
+                    }
+
                     const dateObj = new Date(order.timestamp);
                     const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
                     const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-                    let itemsHtml = order.items.map(i => `<div class="flex justify-between text-xs text-gray-500 mt-1"><span>${i.qty}x ${i.name}</span><span>${formatRupiah(i.qty * i.price)}</span></div>`).join('');
+                    let itemsHtml = order.items.map(i => `<div class="flex justify-between text-xs ${isVoided ? 'text-red-400/70 line-through' : 'text-gray-500'} mt-1"><span>${i.qty}x ${i.name}</span><span>${formatRupiah(i.qty * i.price)}</span></div>`).join('');
+
+                    // Desain Container berubah kalau Void
+                    const containerClass = isVoided ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200';
+                    const idColor = isVoided ? 'text-red-500' : 'text-gray-400';
+                    const totalColor = isVoided ? 'text-red-400 line-through' : 'text-blue-600';
 
                     listDiv.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                            <div class="flex justify-between items-center mb-2 border-b border-gray-100 pb-2">
-                                <span class="text-xs font-bold text-gray-400">#ORD-${order.id.toString().slice(-6)}</span>
-                                <span class="text-xs text-gray-500"><i class="fa-regular fa-clock"></i> ${dateStr} ${timeStr}</span>
+                        <div class="${containerClass} p-4 rounded-xl shadow-sm border relative overflow-hidden">
+                            ${isVoided ? `<div class="absolute -right-6 top-3 bg-red-600 text-white text-[10px] font-black tracking-widest px-8 py-1 rotate-45 shadow-sm opacity-80">VOID</div>` : ''}
+                            
+                            <div class="flex justify-between items-center mb-2 border-b ${isVoided ? 'border-red-100' : 'border-gray-100'} pb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold ${idColor}">#ORD-${order.id.toString().slice(-6)}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs ${isVoided ? 'text-red-400' : 'text-gray-500'}"><i class="fa-regular fa-clock"></i> ${dateStr} ${timeStr}</span>
+                                    ${!isVoided ? `<button onclick="window.openVoidModal(${order.id})" class="text-xs bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 px-2 py-1 rounded border border-red-100 transition-colors active-scale"><i class="fa-solid fa-ban"></i> Void</button>` : ''}
+                                </div>
                             </div>
                             ${itemsHtml}
-                            <div class="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center font-bold">
-                                <span class="text-sm text-gray-800">Total</span>
-                                <span class="text-blue-600">${formatRupiah(order.total)}</span>
+                            <div class="mt-3 pt-2 border-t ${isVoided ? 'border-red-100' : 'border-gray-100'} flex justify-between items-center font-bold">
+                                <span class="text-sm ${isVoided ? 'text-red-500' : 'text-gray-800'}">Total</span>
+                                <span class="${totalColor}">${formatRupiah(order.total)}</span>
                             </div>
                         </div>
                     `;
                 });
             }
             revenueEl.innerText = formatRupiah(totalRevenue);
+        };
+
+        // FUNGSI VOID TRANSAKSI
+        window.openVoidModal = function(orderId) {
+            orderToVoid = orderId;
+            document.getElementById('input-void-pin').value = '';
+            document.getElementById('modal-void-auth').classList.remove('hidden');
+        };
+
+        window.closeVoidModal = function() {
+            orderToVoid = null;
+            document.getElementById('modal-void-auth').classList.add('hidden');
+        };
+
+        window.executeVoidOrder = async function(e) {
+            e.preventDefault();
+            const pin = document.getElementById('input-void-pin').value;
+            
+            if (pin === '1234') {
+                if (orderToVoid && currentUser) {
+                    try {
+                        const orderRef = doc(db, 'artifacts', myAppId, 'public', 'data', 'orders', orderToVoid.toString());
+                        await setDoc(orderRef, { status: 'voided' }, { merge: true }); // Update status jadi void
+                        
+                        window.showToast("Transaksi berhasil di-VOID!", "success");
+                        window.closeVoidModal();
+                    } catch (error) {
+                        window.showToast("Gagal membatalkan transaksi", "error");
+                    }
+                }
+            } else {
+                window.showToast("PIN Void Salah!", "error");
+                document.getElementById('input-void-pin').value = '';
+                const form = document.getElementById('form-void-pin');
+                form.classList.add('translate-x-2');
+                setTimeout(() => form.classList.replace('translate-x-2', '-translate-x-2'), 100);
+                setTimeout(() => form.classList.replace('-translate-x-2', 'translate-x-0'), 200);
+            }
         };
 
         // ==========================================
@@ -640,12 +678,11 @@
                     id: orderId,
                     timestamp: orderId,
                     total: total,
-                    items: cart.map(c => ({ id: c.id, name: c.name, price: c.price, qty: c.qty })) // Simpan data penting saja
+                    status: 'completed', // Status default
+                    items: cart.map(c => ({ id: c.id, name: c.name, price: c.price, qty: c.qty }))
                 };
                 await setDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'orders', orderId.toString()), newOrder);
-            } catch (err) {
-                console.error("Gagal simpan history:", err);
-            }
+            } catch (err) { console.error("Gagal simpan history:", err); }
 
             // 2. Cetak Struk
             if (printerCharacteristic) {
@@ -657,7 +694,6 @@
                     });
                     let strTot = `TOTAL: Rp ${total.toLocaleString('id-ID')}`;
                     receipt += `--------------------------------\n${" ".repeat(Math.max(0, 32 - strTot.length))}${strTot}\n\x1B\x61\x01Terima Kasih!\n\x0A\x0A\x0A`;
-                    
                     const data = new TextEncoder().encode(receipt);
                     for (let i = 0; i < data.length; i += 512) await printerCharacteristic.writeValue(data.slice(i, i + 512));
                     
