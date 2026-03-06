@@ -35,9 +35,7 @@
         }
         
         /* Efek Animasi Tombol */
-        .active-scale:active {
-            transform: scale(0.95);
-        }
+        .active-scale:active { transform: scale(0.95); }
         
         /* Desain Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
@@ -45,7 +43,7 @@
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        /* Mencegah highlight teks saat klik cepat */
+        /* Mencegah teks terblok saat klik cepat */
         .no-select { user-select: none; }
     </style>
 </head>
@@ -86,7 +84,7 @@
             <!-- Area Tampilan Produk (Scrollable) -->
             <div class="flex-1 overflow-y-auto pr-2 pb-6">
                 <div id="product-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <!-- Produk akan dirender di sini via JavaScript -->
+                    <!-- Produk dirender via JavaScript -->
                 </div>
             </div>
         </div>
@@ -98,19 +96,26 @@
                 <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800">
                     <i class="fa-solid fa-cart-shopping text-blue-600"></i> Pesanan (<span id="cart-count">0</span>)
                 </h2>
-                <button onclick="clearCart()" id="btn-clear" class="hidden text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md transition-colors">
-                    <i class="fa-solid fa-trash-can"></i> Kosongkan
+                <!-- Tombol Kosongkan -->
+                <button onclick="openConfirmModal()" id="btn-clear" class="hidden text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-md transition-colors active-scale">
+                    <i class="fa-solid fa-trash-can pointer-events-none"></i> Kosongkan
                 </button>
             </div>
 
-            <!-- Daftar Item Keranjang (Scrollable) -->
-            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
-                <!-- Status Keranjang Kosong -->
+            <!-- Area Keranjang -->
+            <div class="flex-1 overflow-y-auto p-4">
+                
+                <!-- 1. Pesan Kosong -->
                 <div id="empty-cart-msg" class="h-full flex flex-col items-center justify-center text-gray-400">
                     <i class="fa-solid fa-cart-shopping text-6xl mb-4 opacity-20"></i>
                     <p>Pilih menu untuk ditambahkan</p>
                 </div>
-                <!-- Item Keranjang muncul di sini -->
+
+                <!-- 2. Daftar Item (Awalnya Sembunyi) -->
+                <div id="cart-items" class="space-y-3 hidden">
+                    <!-- Item Keranjang muncul di sini -->
+                </div>
+
             </div>
 
             <!-- Bagian Bawah: Total & Tombol Bayar -->
@@ -161,9 +166,24 @@
         </div>
     </div>
 
+    <!-- === MODAL: KONFIRMASI KOSONGKAN KERANJANG === -->
+    <div id="modal-confirm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500"></i>
+            </div>
+            <h3 class="font-bold text-xl text-gray-800 mb-2">Kosongkan Pesanan?</h3>
+            <p class="text-gray-500 mb-6 text-sm">Semua item di keranjang akan dihapus dan tidak bisa dikembalikan.</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors active-scale">Batal</button>
+                <button onclick="executeClearCart()" class="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-colors active-scale">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
     <!-- === AREA CETAK BROWSER (STRUK) === -->
     <div id="printable-receipt" class="hidden">
-        <!-- Struktur HTML untuk struk akan dibuat otomatis oleh JavaScript -->
+        <!-- Struktur HTML untuk struk akan dibuat otomatis -->
     </div>
 
     <!-- === JAVASCRIPT LOGIC === -->
@@ -178,24 +198,20 @@
         
         let cart = [];
         let currentFilter = 'semua';
-        
-        // Status Bluetooth
         let printerDevice = null;
         let printerCharacteristic = null;
 
-        // Utilitas Format Mata Uang (Rupiah)
         const formatRupiah = (number) => {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency', currency: 'IDR', minimumFractionDigits: 0
             }).format(number);
         };
 
-        // 2. FUNGSI MENAMPILKAN DAFTAR PRODUK
+        // 2. TAMPILKAN DAFTAR PRODUK
         function renderProducts() {
             const grid = document.getElementById('product-grid');
-            grid.innerHTML = ''; // Bersihkan grid
+            grid.innerHTML = ''; 
             
-            // Saring berdasarkan kategori
             const filteredProducts = currentFilter === 'semua' 
                 ? products 
                 : products.filter(p => p.category === currentFilter);
@@ -205,7 +221,6 @@
                 const iconClass = isFood ? 'fa-utensils' : 'fa-mug-hot';
                 const colorClass = isFood ? 'bg-orange-50 text-orange-600 group-hover:bg-orange-100' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100';
 
-                // Buat Elemen Tombol Produk
                 const cardHTML = `
                     <button onclick="addToCart(${product.id})" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 hover:border-blue-400 transition-all flex flex-col items-center text-center group active-scale no-select">
                         <div class="p-3 rounded-full mb-3 transition-colors ${colorClass}">
@@ -219,11 +234,9 @@
             });
         }
 
-        // 3. FUNGSI FILTER KATEGORI
+        // 3. FILTER
         function setFilter(category) {
             currentFilter = category;
-            
-            // Reset gaya semua tombol filter
             ['semua', 'makanan', 'minuman'].forEach(cat => {
                 const btn = document.getElementById(`filter-${cat}`);
                 if (cat === category) {
@@ -232,11 +245,10 @@
                     btn.className = "filter-btn px-4 py-2 rounded-lg font-medium capitalize transition-colors bg-white text-gray-600 hover:bg-gray-200 border border-gray-200";
                 }
             });
-            
             renderProducts();
         }
 
-        // 4. FUNGSI MENGELOLA KERANJANG PESANAN
+        // 4. MENGELOLA KERANJANG
         function renderCart() {
             const cartItemsDiv = document.getElementById('cart-items');
             const emptyMsg = document.getElementById('empty-cart-msg');
@@ -248,19 +260,18 @@
             let total = 0;
             let totalItems = 0;
             
-            cartItemsDiv.innerHTML = ''; // Bersihkan daftar sebelumnya
+            cartItemsDiv.innerHTML = ''; 
 
             if (cart.length === 0) {
-                // Tampilan jika keranjang kosong
-                cartItemsDiv.appendChild(emptyMsg);
                 emptyMsg.style.display = 'flex';
+                cartItemsDiv.style.display = 'none';
                 btnClear.style.display = 'none';
                 
                 btnPay.disabled = true;
-                btnPay.className = "w-full py-4 rounded-xl font-bold text-lg flex justify-center items-center gap-2 transition-all shadow-none bg-gray-200 text-gray-400 cursor-not-allowed";
+                btnPay.className = "w-full py-4 rounded-xl font-bold text-lg flex justify-center items-center gap-2 transition-all shadow-none bg-gray-200 text-gray-400 cursor-not-allowed no-select";
             } else {
-                // Tampilan jika ada isi keranjang
                 emptyMsg.style.display = 'none';
+                cartItemsDiv.style.display = 'block';
                 btnClear.style.display = 'flex';
                 
                 btnPay.disabled = false;
@@ -270,7 +281,6 @@
                     total += (item.price * item.qty);
                     totalItems += item.qty;
 
-                    // Desain Item Keranjang beserta Tombol Hapus (Trash)
                     const itemHTML = `
                         <div class="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl shadow-sm">
                             <div class="flex-1 pr-2">
@@ -280,15 +290,15 @@
                             <div class="flex items-center gap-3">
                                 <div class="flex items-center bg-gray-50 rounded-lg border border-gray-200 no-select">
                                     <button onclick="updateQty(${item.id}, -1)" class="w-8 h-8 flex justify-center items-center hover:text-blue-600 hover:bg-gray-200 rounded-l-lg transition-colors">
-                                        <i class="fa-solid fa-minus text-xs"></i>
+                                        <i class="fa-solid fa-minus text-xs pointer-events-none"></i>
                                     </button>
                                     <span class="w-6 text-center font-bold text-sm bg-white py-1">${item.qty}</span>
                                     <button onclick="updateQty(${item.id}, 1)" class="w-8 h-8 flex justify-center items-center hover:text-blue-600 hover:bg-gray-200 rounded-r-lg transition-colors">
-                                        <i class="fa-solid fa-plus text-xs"></i>
+                                        <i class="fa-solid fa-plus text-xs pointer-events-none"></i>
                                     </button>
                                 </div>
-                                <button onclick="removeItem(${item.id})" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors">
-                                    <i class="fa-solid fa-trash-can"></i>
+                                <button onclick="removeItem(${item.id})" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors active-scale">
+                                    <i class="fa-solid fa-trash-can pointer-events-none"></i>
                                 </button>
                             </div>
                         </div>
@@ -297,17 +307,13 @@
                 });
             }
 
-            // Update Angka Total
             cartCount.innerText = totalItems;
             totalPriceEl.innerText = formatRupiah(total);
         }
 
-        // Tambah Produk ke Keranjang
         function addToCart(productId) {
-            // Gunakan '==' agar aman jika terjadi perbedaan format String/Number
             const product = products.find(p => p.id == productId);
             if (!product) return;
-
             const existingItemIndex = cart.findIndex(item => item.id == productId);
             if (existingItemIndex > -1) {
                 cart[existingItemIndex].qty += 1;
@@ -317,247 +323,137 @@
             renderCart();
         }
 
-        // Kurangi / Tambah Jumlah Item
         function updateQty(productId, delta) {
             const itemIndex = cart.findIndex(item => item.id == productId);
             if (itemIndex > -1) {
                 cart[itemIndex].qty += delta;
                 if (cart[itemIndex].qty <= 0) {
-                    cart.splice(itemIndex, 1); // Hapus jika jumlah jadi 0
+                    cart.splice(itemIndex, 1);
                 }
             }
             renderCart();
         }
 
-        // Hapus Langsung 1 Jenis Produk (Tombol Tong Sampah)
         function removeItem(productId) {
             cart = cart.filter(item => item.id != productId);
             renderCart();
         }
 
-        // Kosongkan Semua Keranjang
-        function clearCart() {
-            if(confirm('Apakah Anda yakin ingin mengosongkan semua pesanan?')) {
-                cart = [];
-                renderCart();
-            }
+        // --- SISTEM KOSONGKAN KERANJANG BARU (ANTI-BLOKIR) ---
+        function openConfirmModal() {
+            document.getElementById('modal-confirm').classList.remove('hidden');
         }
 
-        // 5. FUNGSI MODAL TAMBAH PRODUK
-        function openModal() {
-            document.getElementById('modal-add').classList.remove('hidden');
+        function closeConfirmModal() {
+            document.getElementById('modal-confirm').classList.add('hidden');
         }
 
-        function closeModal() {
+        function executeClearCart() {
+            cart = [];
+            renderCart();
+            closeConfirmModal();
+        }
+
+        // 5. MODAL TAMBAH PRODUK
+        function openModal() { document.getElementById('modal-add').classList.remove('hidden'); }
+        function closeModal() { 
             document.getElementById('modal-add').classList.add('hidden');
             document.getElementById('form-add').reset();
         }
 
-        // Simpan Produk Baru
         function handleAddProduct(event) {
-            event.preventDefault(); // Mencegah reload halaman
+            event.preventDefault(); 
             const name = document.getElementById('input-name').value;
             const price = parseInt(document.getElementById('input-price').value);
             const category = document.getElementById('input-category').value;
 
             if (name && price > 0) {
-                const newProduct = {
-                    id: Date.now(), // Generate ID Unik dari Waktu
-                    name: name,
-                    price: price,
-                    category: category
-                };
-                products.push(newProduct);
+                products.push({ id: Date.now(), name: name, price: price, category: category });
                 closeModal();
-                setFilter(category); // Pindahkan filter ke kategori yang baru ditambah
-                alert("Menu baru berhasil ditambahkan!");
+                setFilter(category);
             }
         }
 
-        // 6. FUNGSI BLUETOOTH PRINTER
+        // 6. BLUETOOTH
         async function connectBluetooth() {
             if (!navigator.bluetooth) {
-                alert("Browser ini tidak mendukung Web Bluetooth. Gunakan Google Chrome di Android/PC Desktop.");
+                alert("Gunakan Chrome di Android/PC Desktop untuk fitur Bluetooth.");
                 return;
             }
-
             const btn = document.getElementById('btn-bluetooth');
             const icon = document.getElementById('icon-bluetooth');
             const text = document.getElementById('text-bluetooth');
             const textPay = document.getElementById('text-pay');
 
             text.innerText = "Mencari...";
-            
             try {
-                // Mencari perangkat Bluetooth di sekitar
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: [
-                        '000018f0-0000-1000-8000-00805f9b34fb', // Standard BLE POS
-                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Printer China 58mm
-                        '0000fee7-0000-1000-8000-00805f9b34fb'  // Alternatif lain
+                        '000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '0000fee7-0000-1000-8000-00805f9b34fb'
                     ]
                 });
-
                 const server = await device.gatt.connect();
                 const services = await server.getPrimaryServices();
                 let characteristic = null;
-
-                // Mencari layanan (service) yang bisa menerima print/write
                 for (const service of services) {
                     const characteristics = await service.getCharacteristics();
                     for (const char of characteristics) {
-                        if (char.properties.write || char.properties.writeWithoutResponse) {
-                            characteristic = char;
-                            break;
-                        }
+                        if (char.properties.write || char.properties.writeWithoutResponse) { characteristic = char; break; }
                     }
                     if (characteristic) break;
                 }
 
                 if (characteristic) {
-                    printerDevice = device;
-                    printerCharacteristic = characteristic;
-                    
-                    // Update Tampilan Tombol jadi Hijau
+                    printerDevice = device; printerCharacteristic = characteristic;
                     btn.className = "flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 transition-all shadow-sm active-scale";
-                    icon.className = "fa-solid fa-link";
-                    text.innerText = "Printer Aktif";
-                    textPay.innerText = "Cetak ke Bluetooth";
-                    
-                    alert("Printer Bluetooth Berhasil Tersambung!");
-                } else {
-                    throw new Error("Gagal menemukan layanan cetak pada perangkat ini.");
-                }
+                    icon.className = "fa-solid fa-link"; text.innerText = "Printer Aktif"; textPay.innerText = "Cetak ke Bluetooth";
+                    alert("Printer Bluetooth Tersambung!");
+                } else { throw new Error("Gagal menemukan layanan cetak."); }
             } catch (error) {
-                console.error(error);
-                alert("Koneksi gagal/dibatalkan: " + error.message);
-                text.innerText = "Koneksi Printer";
+                console.error(error); alert("Gagal/dibatalkan: " + error.message); text.innerText = "Koneksi Printer";
             }
         }
 
-        // 7. FUNGSI CETAK STRUK & PEMBAYARAN
+        // 7. CETAK & BAYAR
         async function handlePrint() {
             if (cart.length === 0) return;
-
             const currentDate = new Date().toLocaleString('id-ID');
             const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-            // JIKA BLUETOOTH TERSAMBUNG -> Cetak Langsung Tanpa Dialog
             if (printerCharacteristic) {
                 try {
-                    let receipt = "";
-                    
-                    // ESC/POS Commands (Perintah Bahasa Mesin Printer)
-                    receipt += "\x1B\x40"; // Initialize
-                    receipt += "\x1B\x61\x01"; // Align Center
-                    receipt += "KASIRKU PINTAR\n";
-                    receipt += "Jl. Contoh Jalan No. 123\n";
-                    receipt += `Waktu: ${currentDate}\n`;
-                    receipt += "--------------------------------\n";
-                    
-                    receipt += "\x1B\x61\x00"; // Align Left
+                    let receipt = "\x1B\x40\x1B\x61\x01KASIRKU PINTAR\nJl. Contoh Jalan No. 123\nWaktu: " + currentDate + "\n--------------------------------\n\x1B\x61\x00";
                     cart.forEach(item => {
                         receipt += `${item.name}\n`;
                         let line2 = `${item.qty} x ${item.price}`;
                         let totalItem = `${item.qty * item.price}`;
-                        let spaces = 32 - line2.length - totalItem.length;
-                        receipt += line2 + " ".repeat(Math.max(1, spaces)) + totalItem + "\n";
+                        receipt += line2 + " ".repeat(Math.max(1, 32 - line2.length - totalItem.length)) + totalItem + "\n";
                     });
-                    
-                    receipt += "--------------------------------\n";
-                    
                     let strTotal = `TOTAL: Rp ${total.toLocaleString('id-ID')}`;
-                    receipt += " ".repeat(Math.max(0, 32 - strTotal.length)) + strTotal + "\n";
+                    receipt += "--------------------------------\n" + " ".repeat(Math.max(0, 32 - strTotal.length)) + strTotal + "\n\x1B\x61\x01Terima Kasih!\n\x0A\x0A\x0A";
                     
-                    receipt += "\x1B\x61\x01"; // Align Center
-                    receipt += "Terima Kasih!\n";
-                    receipt += "\x0A\x0A\x0A"; // Feed 3 lines biar struk keluar
-
-                    const encoder = new TextEncoder();
-                    const data = encoder.encode(receipt);
-                    
-                    // Kirim data ke printer sedikit-sedikit (Limit Bluetooth MTU)
-                    for (let i = 0; i < data.length; i += 512) {
-                        await printerCharacteristic.writeValue(data.slice(i, i + 512));
-                    }
-                    
-                    // Kosongkan keranjang jika sukses print Bluetooth
-                    cart = [];
-                    renderCart();
-                    alert("Pembayaran Berhasil. Struk telah dicetak!");
-                    return; // Proses Selesai
-                    
+                    const data = new TextEncoder().encode(receipt);
+                    for (let i = 0; i < data.length; i += 512) { await printerCharacteristic.writeValue(data.slice(i, i + 512)); }
+                    cart = []; renderCart(); return;
                 } catch (error) {
-                    console.error("Gagal print bluetooth:", error);
-                    alert("Koneksi Bluetooth terputus. Sistem akan menggunakan mode Cetak Browser.");
+                    // Fallback to browser print if bluetooth fails
                 }
             }
 
-            // JIKA TIDAK ADA BLUETOOTH -> Gunakan Fitur Print PDF Bawaan Browser
             const receiptDiv = document.getElementById('printable-receipt');
-            
-            // Generate HTML Struk
-            let receiptHTML = `
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <h2 style="margin: 0 0 5px 0; font-size: 16px;">KASIRKU PINTAR</h2>
-                    <p style="margin: 0; font-size: 10px;">Jl. Contoh Jalan No. 123</p>
-                    <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
-                    <p style="margin: 0; font-size: 10px; text-align: left;">Waktu: ${currentDate}</p>
-                    <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
-                </div>
-                <div style="margin-bottom: 10px;">
-            `;
-
+            let receiptHTML = `<div style="text-align: center; margin-bottom: 10px;"><h2 style="margin: 0 0 5px 0; font-size: 16px;">KASIRKU PINTAR</h2><p style="margin: 0; font-size: 10px;">Jl. Contoh Jalan No. 123</p><div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div><p style="margin: 0; font-size: 10px; text-align: left;">Waktu: ${currentDate}</p><div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div></div><div style="margin-bottom: 10px;">`;
             cart.forEach(item => {
-                receiptHTML += `
-                    <div style="margin-bottom: 5px;">
-                        <div style="font-size: 12px; font-weight: bold;">${item.name}</div>
-                        <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                            <span>${item.qty} x ${item.price.toLocaleString('id-ID')}</span>
-                            <span>${(item.qty * item.price).toLocaleString('id-ID')}</span>
-                        </div>
-                    </div>
-                `;
+                receiptHTML += `<div style="margin-bottom: 5px;"><div style="font-size: 12px; font-weight: bold;">${item.name}</div><div style="display: flex; justify-content: space-between; font-size: 12px;"><span>${item.qty} x ${item.price.toLocaleString('id-ID')}</span><span>${(item.qty * item.price).toLocaleString('id-ID')}</span></div></div>`;
             });
-
-            receiptHTML += `
-                </div>
-                <div style="border-top: 1px dashed #000; padding-top: 5px; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
-                        <span>TOTAL:</span>
-                        <span>Rp ${total.toLocaleString('id-ID')}</span>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 20px; font-size: 10px;">
-                    <p style="margin: 0;">Terima Kasih Atas Kunjungan Anda!</p>
-                </div>
-            `;
-
-            // Pasang HTML Struk ke div yang akan dicetak
+            receiptHTML += `</div><div style="border-top: 1px dashed #000; padding-top: 5px; margin-bottom: 10px;"><div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;"><span>TOTAL:</span><span>Rp ${total.toLocaleString('id-ID')}</span></div></div><div style="text-align: center; margin-top: 20px; font-size: 10px;"><p style="margin: 0;">Terima Kasih Atas Kunjungan Anda!</p></div>`;
+            
             receiptDiv.innerHTML = receiptHTML;
-
-            // Atur Event: Apa yang terjadi SETELAH jendela print ditutup?
-            window.onafterprint = function() {
-                // Hapus event listener agar tidak bentrok di print berikutnya
-                window.onafterprint = null; 
-                // Otomatis kosongkan keranjang karena dianggap sudah dibayar
-                if(cart.length > 0) {
-                    cart = [];
-                    renderCart();
-                }
-            };
-
-            // Panggil Jendela Print
+            window.onafterprint = function() { window.onafterprint = null; cart = []; renderCart(); };
             window.print();
         }
 
-        // 8. JALANKAN SAAT HALAMAN PERTAMA KALI DIBUKA
-        window.onload = () => {
-            renderProducts();
-            renderCart();
-        };
-
+        window.onload = () => { renderProducts(); renderCart(); };
     </script>
 </body>
 </html>
