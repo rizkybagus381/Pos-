@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         /* CSS KHUSUS PRINT */
         @media print {
@@ -75,9 +74,9 @@
             
             <!-- Indikator Loading Data -->
             <div id="loading-overlay" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center rounded-2xl m-3 md:m-4">
-                <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4 shadow-sm rounded-full bg-white"></i>
-                <p class="font-bold text-gray-800 text-lg">Menghubungkan ke Database...</p>
-                <p class="text-sm text-gray-500 mt-1">Mengambil data dari Firebase</p>
+                <i id="loading-spinner" class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4 shadow-sm rounded-full bg-white"></i>
+                <p id="loading-title" class="font-bold text-gray-800 text-lg">Menghubungkan ke Database...</p>
+                <p id="loading-desc" class="text-sm text-gray-500 mt-1">Mengambil data dari Firebase</p>
             </div>
 
             <!-- Header -->
@@ -125,7 +124,7 @@
         </div>
 
         <!-- BAGIAN KANAN/BAWAH: KERANJANG & BAYAR -->
-        <div class="w-full md:w-1/3 bg-white flex flex-col h-[42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQ,0,0.08)] z-20">
+        <div class="w-full md:w-1/3 bg-white flex flex-col h-full shadow-xl z-20">
             <div class="flex-none p-3 md:p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h2 class="text-base md:text-lg font-bold flex items-center gap-2 text-gray-800">
                     <i class="fa-solid fa-cart-shopping text-blue-600"></i> Pesanan (<span id="cart-count">0</span>)
@@ -356,11 +355,11 @@
     <!-- === JAVASCRIPT LOGIC DENGAN FIREBASE === -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // CONFIG FIREBASE ANDA
-        const firebaseConfig = {
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBPzVaOwVo7Vny6Zd1Hfuyn21neRAH5GQs",
             authDomain: "absen-fa8b4.firebaseapp.com",
             projectId: "absen-fa8b4",
@@ -369,19 +368,19 @@
             appId: "1:186875255423:web:2eb5f1f22882f58e28fd4a",
             measurementId: "G-VRHBYD6505"
         };
-        
-        const myAppId = 'kasirku-app-github'; 
+        const myAppId = typeof __app_id !== 'undefined' ? __app_id : 'kasirku-app-github';
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
+
         let currentUser = null;
         let products = [];
         let ordersHistory = []; 
         let cart = [];
         let currentFilter = 'semua';
         let printerCharacteristic = null;
-        
+
         let storeName = 'KASIRKU PINTAR';
         let storeAddress = 'Jl. Contoh Alamat No. 123';
         // Menyimpan Master PIN untuk keamanan ekstra. Jika belum diatur di Cloud, default-nya 1234
@@ -389,18 +388,26 @@
 
         let productToDelete = null;
         let selectedImageBase64 = null; 
-        let currentAdminActionCallback = null; // Menyimpan fungsi yang ditahan oleh PIN
+        let currentAdminActionCallback = null;
 
         let currentPaymentMethod = 'Tunai';
         let currentCartTotal = 0;
         let cashReceived = 0;
         let changeAmount = 0;
 
+        // Tampilkan Error Database di Layar Loading
+        function showDatabaseError() {
+            document.getElementById('loading-spinner').className = "fa-solid fa-triangle-exclamation text-5xl text-red-500 mb-4 shadow-sm bg-white";
+            document.getElementById('loading-title').innerText = "Akses Database Ditolak!";
+            document.getElementById('loading-title').className = "font-bold text-red-600 text-xl";
+            document.getElementById('loading-desc').innerHTML = `Gagal mengambil data dari Firebase.<br><br><b>Penyebab Umum:</b><br>1. <b class="text-gray-800">Anonymous Auth</b> belum diaktifkan di Firebase Console.<br>2. <b class="text-gray-800">Firestore Rules</b> masih menolak akses Read/Write.<br><br>Cek aturan keamanan Firebase Anda.`;
+            document.getElementById('loading-desc').className = "text-sm text-gray-600 mt-2 text-center bg-red-50 p-3 rounded-lg border border-red-100 max-w-xs";
+        }
+
         // ==========================================
         // 1. SISTEM LOGIN & AUTO-LOCK TIMEOUT
         // ==========================================
         let idleTime = 0;
-        // Timer Kunci Otomatis (Auto-Lock) jika didiamkan 3 Menit
         const idleInterval = setInterval(() => {
             if(sessionStorage.getItem('isKasirLoggedIn') === 'true') {
                 idleTime += 1;
@@ -408,9 +415,8 @@
                     window.logoutPin(); 
                 }
             }
-        }, 60000); // Cek tiap 1 Menit
+        }, 60000);
 
-        // Reset timer jika ada aktivitas di layar
         window.onmousemove = () => idleTime = 0;
         window.onkeypress = () => idleTime = 0;
         window.ontouchstart = () => idleTime = 0;
@@ -418,7 +424,6 @@
         window.checkPin = function(e) {
             e.preventDefault();
             const inputPin = document.getElementById('input-pin').value;
-            // Mengecek kesamaan input dengan Master PIN
             if (inputPin === masterAppPin) {
                 sessionStorage.setItem('isKasirLoggedIn', 'true');
                 document.getElementById('pin-overlay').classList.add('hidden');
@@ -433,8 +438,8 @@
         };
 
         window.logoutPin = function() { 
-            sessionStorage.removeItem('isKasirLoggedIn'); 
-            location.reload(); // Muat ulang layar untuk mereset tampilan dan mengunci kasir
+             sessionStorage.removeItem('isKasirLoggedIn'); 
+             location.reload(); 
         };
 
         if (sessionStorage.getItem('isKasirLoggedIn') === 'true') {
@@ -460,8 +465,16 @@
         // 2. KONEKSI FIREBASE (REALTIME) & PENGATURAN TOKO
         // ==========================================
         async function initAuth() {
-            try { await signInAnonymously(auth); } 
-            catch (err) { document.getElementById('loading-overlay').innerHTML = `<p class="text-red-500 font-bold">Gagal menyambung ke Database</p>`; }
+            try { 
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth); 
+                }
+            } catch (err) { 
+                console.error("Auth Error:", err);
+                showDatabaseError();
+            }
         }
 
         onAuthStateChanged(auth, (user) => {
@@ -480,14 +493,16 @@
                     storeName = data.name || 'KASIRKU PINTAR';
                     storeAddress = data.address || 'Jl. Contoh Alamat No. 123';
                     if (data.pin) {
-                        masterAppPin = data.pin; // Mengupdate Master PIN dari Cloud
-                        localStorage.setItem('kasir_pin_cache', masterAppPin); // Simpan sementara
+                        masterAppPin = data.pin;
+                        localStorage.setItem('kasir_pin_cache', masterAppPin); 
                     }
                 }
                 document.getElementById('header-store-name').innerHTML = `<i class="fa-solid fa-store"></i> ${storeName}`;
                 document.getElementById('input-store-name').value = storeName;
                 document.getElementById('input-store-address').value = storeAddress;
                 document.getElementById('input-store-pin').value = masterAppPin;
+            }, (error) => {
+                console.error("Setting DB Error:", error);
             });
         }
 
@@ -498,12 +513,14 @@
                 snapshot.forEach(doc => { products.push(doc.data()); });
                 products.sort((a, b) => b.id - a.id);
                 window.renderProducts();
+            }, (error) => {
+                console.error("Product DB Error:", error);
+                showDatabaseError();
             });
         }
 
         function loadHistoryFromFirebase() {
-            const ordersRef = collection(db, 'artifacts', myAppId, 'public', 'data', 'orders');
-            onSnapshot(ordersRef, (snapshot) => {
+            onSnapshot(collection(db, 'artifacts', myAppId, 'public', 'data', 'orders'), (snapshot) => {
                 ordersHistory = [];
                 snapshot.forEach(doc => { ordersHistory.push(doc.data()); });
                 ordersHistory.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -511,14 +528,14 @@
                 if(!document.getElementById('modal-history').classList.contains('hidden')){
                     window.renderHistory();
                 }
+            }, (error) => {
+                console.error("History DB Error:", error);
             });
         }
 
         // ==========================================
         // 3. FITUR PROTEKSI SENSITIF (ADMIN PIN GUARD)
         // ==========================================
-        
-        // Membuka modal PIN sebelum mengeksekusi fungsi sensitif
         window.requestAdminAuth = function(actionName, callbackFunction) {
             currentAdminActionCallback = callbackFunction;
             document.getElementById('admin-auth-desc').innerText = `Masukkan PIN Master untuk mengakses ${actionName}.`;
@@ -531,17 +548,16 @@
             document.getElementById('modal-admin-auth').classList.add('hidden');
         };
 
-        // Mengecek PIN yang dimasukkan khusus untuk aksi di dalam aplikasi
         window.verifyAdminPin = function(e) {
             e.preventDefault();
             const inputPin = document.getElementById('input-admin-pin').value;
             
             if (inputPin === masterAppPin) {
-                const actionToExecute = currentAdminActionCallback; // Simpan perintahnya terlebih dahulu
-                window.closeAdminAuthModal(); // Tutup layar PIN (ini akan mereset variabel callback)
+                const actionToExecute = currentAdminActionCallback; 
+                window.closeAdminAuthModal(); 
                 
                 if (actionToExecute) {
-                    actionToExecute(); // Jalankan perintah (Buka Riwayat, Pengaturan, dll)
+                    actionToExecute(); 
                 }
             } else {
                 window.showToast("PIN Master Salah!", "error");
@@ -570,10 +586,9 @@
                     ? `<img src="${product.image}" alt="${product.name}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-full mb-2 shadow-sm border border-gray-100" />`
                     : `<div class="p-3 w-16 h-16 md:w-20 md:h-20 rounded-full mb-2 flex items-center justify-center transition-colors ${colorClass}"><i class="fa-solid ${iconClass} text-2xl md:text-3xl"></i></div>`;
 
-                // Tombol Hapus Produk juga diproteksi dengan requestAdminAuth
                 grid.innerHTML += `
                     <div class="relative bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 hover:border-blue-400 transition-all flex flex-col group no-select">
-                        <button onclick="event.stopPropagation(); window.requestAdminAuth('Hapus Menu', () => window.openDeleteProductModal(${product.id}))" class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center bg-gray-100 text-gray-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQ"><i class="fa-solid fa-trash-can text-[10px] pointer-events-none"></i></button>
+                        <button onclick="event.stopPropagation(); window.requestAdminAuth('Hapus Menu', () => window.openDeleteProductModal(${product.id}))" class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500 rounded-full transition-all"><i class="fa-solid fa-trash-can text-[10px] pointer-events-none"></i></button>
                         <div onclick="window.addToCart(${product.id})" class="p-3 md:p-4 w-full h-full flex flex-col items-center text-center cursor-pointer active-scale pt-6">
                             ${imageOrIcon}
                             <h3 class="font-semibold text-gray-800 text-xs md:text-sm mb-1 h-8 md:h-10 line-clamp-2">${product.name}</h3>
@@ -616,7 +631,7 @@
                                     <span class="w-5 md:w-6 text-center font-bold text-xs md:text-sm bg-white py-1">${item.qty}</span>
                                     <button onclick="window.updateQty(${item.id}, 1)" class="w-6 h-6 md:w-8 md:h-8 flex justify-center items-center hover:bg-gray-200 rounded-r-lg"><i class="fa-solid fa-plus text-[10px]"></i></button>
                                 </div>
-                                <button onclick="window.removeItem(${item.id})" class="text-red-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQ-can text-sm"></i></button>
+                                <button onclick="window.removeItem(${item.id})" class="text-red-500 hover:text-red-700 transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
                             </div>
                         </div>`;
                 });
@@ -774,8 +789,8 @@
         // 6. HISTORY, VOID, SETTINGS & UPLOAD
         // ==========================================
         window.openHistoryModal = function() { 
-            document.getElementById('modal-history').classList.remove('hidden'); 
-            window.renderHistory();
+             document.getElementById('modal-history').classList.remove('hidden'); 
+             window.renderHistory();
         };
         window.closeHistoryModal = function() { document.getElementById('modal-history').classList.add('hidden'); };
 
@@ -787,7 +802,7 @@
                 let totalRevenue = 0;
 
                 if (!ordersHistory || ordersHistory.length === 0) {
-                    listDiv.innerHTML = `<div class="text-center text-gray-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQ><p>Belum ada riwayat penjualan.</p></div>`;
+                    listDiv.innerHTML = `<div class="text-center text-gray-400 py-10"><p>Belum ada riwayat penjualan.</p></div>`;
                 } else {
                     ordersHistory.forEach(order => {
                         const isVoided = order.status === 'voided';
@@ -799,7 +814,7 @@
 
                         let itemsHtml = '';
                         if (order.items && Array.isArray(order.items)) {
-                            itemsHtml = order.items.map(i => `<div class="flex justify-between text-xs ${isVoided ? 'text-red-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQ((i.qty||1) * (i.price||0))}</span></div>`).join('');
+                            itemsHtml = order.items.map(i => `<div class="flex justify-between text-xs ${isVoided ? 'text-red-400' : 'text-gray-600'}"><span>${i.qty}x ${i.name}</span><span>${formatRupiah((i.qty||1) * (i.price||0))}</span></div>`).join('');
                         }
 
                         const containerClass = isVoided ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200';
@@ -832,13 +847,13 @@
         };
 
         window.executeVoidOrderDirect = async function(orderId) { 
-            if (currentUser) { 
-                try { 
-                    await setDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'orders', orderId.toString()), { status: 'voided' }, { merge: true }); 
-                    window.showToast("Transaksi berhasil di-VOID!", "success"); 
-                } catch (error) { window.showToast("Gagal membatalkan transaksi", "error"); } 
-            } 
-        };
+             if (currentUser) { 
+                 try { 
+                     await setDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'orders', orderId.toString()), { status: 'voided' }, { merge: true }); 
+                     window.showToast("Transaksi berhasil di-VOID!", "success"); 
+                 } catch (error) { window.showToast("Gagal membatalkan transaksi", "error"); } 
+             } 
+         };
 
         // Utilities
         window.openConfirmModal = function() { document.getElementById('modal-confirm').classList.remove('hidden'); };
@@ -849,34 +864,134 @@
         window.openDeleteProductModal = function(id) { productToDelete = id; document.getElementById('modal-delete-product').classList.remove('hidden'); };
         window.closeDeleteProductModal = function() { productToDelete = null; document.getElementById('modal-delete-product').classList.add('hidden'); };
         
-        window.executeDeleteProduct = async function() { if (!productToDelete || !currentUser) return; try { await deleteDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'products', productToDelete.toString())); cart = cart.filter(item => item.id !== productToDelete); window.renderCart(); window.showToast("Menu dihapus!", "success"); } catch (error) { window.showToast("Gagal hapus", "error"); } finally { window.closeDeleteProductModal(); } };
+        window.executeDeleteProduct = async function() { 
+            if (!productToDelete || !currentUser) return; 
+            try { 
+                await deleteDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'products', productToDelete.toString())); 
+                cart = cart.filter(item => item.id !== productToDelete); 
+                window.renderCart(); 
+                window.showToast("Menu dihapus!", "success"); 
+            } catch (error) { 
+                window.showToast("Gagal hapus", "error"); 
+            } finally { 
+                window.closeDeleteProductModal(); 
+            } 
+        };
         
         window.saveSettings = async function(e) { 
-            e.preventDefault(); 
-            const n = document.getElementById('input-store-name').value; 
-            const a = document.getElementById('input-store-address').value; 
-            const p = document.getElementById('input-store-pin').value;
-            
-            try { 
-                // Simpan perubahan PIN dan Identitas Toko
+             e.preventDefault(); 
+             const n = document.getElementById('input-store-name').value; 
+             const a = document.getElementById('input-store-address').value; 
+             const p = document.getElementById('input-store-pin').value;
+             
+             try { 
                 await setDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'settings', 'store_info'), { name: n.toUpperCase(), address: a, pin: p }); 
-                masterAppPin = p; // Update lokal
+                masterAppPin = p; 
                 window.closeSettingsModal(); 
                 window.showToast("Toko diperbarui! PIN Tersimpan.", "success"); 
-            } catch (err) { window.showToast("Gagal simpan", "error"); } 
+             } catch (err) { window.showToast("Gagal simpan", "error"); } 
+         };
+
+        window.previewImage = function(event) { 
+            const file = event.target.files[0]; 
+            if (!file) return; 
+            const reader = new FileReader(); 
+            reader.readAsDataURL(file); 
+            reader.onload = function(e) { 
+                const img = new Image(); 
+                img.src = e.target.result; 
+                img.onload = function() { 
+                    const canvas = document.createElement('canvas'); 
+                    const MAX_WIDTH = 300; 
+                    const scaleSize = MAX_WIDTH / img.width; 
+                    canvas.width = MAX_WIDTH; 
+                    canvas.height = img.height * scaleSize; 
+                    const ctx = canvas.getContext('2d'); 
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
+                    selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+                    document.getElementById('image-placeholder').classList.add('hidden'); 
+                    const imgPreview = document.getElementById('image-preview'); 
+                    imgPreview.src = selectedImageBase64; 
+                    imgPreview.classList.remove('hidden'); 
+                } 
+            } 
+        };
+        
+        window.handleAddProduct = async function(e) { 
+            e.preventDefault(); 
+            if (!currentUser) return; 
+            const name = document.getElementById('input-name').value; 
+            const price = parseInt(document.getElementById('input-price').value); 
+            const category = document.getElementById('input-category').value; 
+            if (name && price > 0) { 
+                const newProduct = { id: Date.now(), name, price, category, image: selectedImageBase64 || null }; 
+                try { 
+                    await setDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'products', newProduct.id.toString()), newProduct); 
+                    window.closeModal(); 
+                    window.showToast("Menu disimpan!", "success"); 
+                } catch (error) { 
+                    window.showToast("Gagal simpan", "error"); 
+                } 
+            } 
         };
 
-        window.previewImage = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); const MAX_WIDTH = 300; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.6); document.getElementById('image-placeholder').classList.add('hidden'); const imgPreview = document.getElementById('image-preview'); imgPreview.src = selectedImageBase64; imgPreview.classList.remove('hidden'); } } };
+        window.openModal = function() { 
+            selectedImageBase64 = null; 
+            document.getElementById('image-preview').classList.add('hidden'); 
+            document.getElementById('image-placeholder').classList.remove('hidden'); 
+            document.getElementById('input-image').value = ''; 
+            document.getElementById('modal-add').classList.remove('hidden'); 
+        };
+
+        window.closeModal = function() { 
+            document.getElementById('modal-add').classList.add('hidden'); 
+            document.getElementById('form-add').reset(); 
+        };
         
-        window.handleAddProduct = async function(e) { e.preventDefault(); if (!currentUser) return; const name = document.getElementById('input-name').value; const price = parseInt(document.getElementById('input-price').value); const category = document.getElementById('input-category').value; if (name && price > 0) { const newProduct = { id: Date.now(), name, price, category, image: selectedImageBase64 || null }; try { await setDoc(doc(db, 'artifacts', myAppId, 'public', 'data', 'products', newProduct.id.toString()), newProduct); window.closeModal(); window.showToast("Menu disimpan!", "success"); } catch (error) { window.showToast("Gagal simpan", "error"); } } };
-        window.openModal = function() { selectedImageBase64 = null; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('image-placeholder').classList.remove('hidden'); document.getElementById('input-image').value = ''; document.getElementById('modal-add').classList.remove('hidden'); };
-        window.closeModal = function() { document.getElementById('modal-add').classList.add('hidden'); document.getElementById('form-add').reset(); };
-        
-        window.connectBluetooth = async function() { if (!navigator.bluetooth) { window.showToast("Gunakan Chrome PC/Android", "error"); return; } try { const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQgatt.connect(); const services = await server.getPrimaryServices(); for (const s of services) { for (const c of await s.getCharacteristics()) { if (c.properties.write || c.properties.writeWithoutResponse) { printerCharacteristic = c; break; } } if (printerCharacteristic) break; } if (printerCharacteristic) { document.getElementById('btn-bluetooth').className = "flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-white bg-green-600 active-scale text-sm"; document.getElementById('icon-bluetooth').className = "fa-solid fa-link"; document.getElementById('text-bluetooth').innerText = "Tersambung"; window.showToast("Bluetooth Tersambung!", "success"); } else throw new Error("Gagal mencari printer."); } catch (err) { window.showToast("Batal", "error"); } };
+        window.connectBluetooth = async function() { 
+            if (!navigator.bluetooth) { 
+                window.showToast("Gunakan Chrome PC/Android", "error"); 
+                return; 
+            } 
+            try { 
+                const device = await navigator.bluetooth.requestDevice({ 
+                    acceptAllDevices: true, 
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2'] 
+                });
+                const server = await device.gatt.connect(); 
+                const services = await server.getPrimaryServices(); 
+                for (const s of services) { 
+                    for (const c of await s.getCharacteristics()) { 
+                        if (c.properties.write || c.properties.writeWithoutResponse) { 
+                            printerCharacteristic = c; 
+                            break; 
+                        } 
+                    } 
+                    if (printerCharacteristic) break; 
+                } 
+                if (printerCharacteristic) { 
+                    document.getElementById('btn-bluetooth').className = "flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-white bg-green-600 active-scale text-sm"; 
+                    document.getElementById('icon-bluetooth').className = "fa-solid fa-link"; 
+                    document.getElementById('text-bluetooth').innerText = "Tersambung"; 
+                    window.showToast("Bluetooth Tersambung!", "success"); 
+                } else {
+                    throw new Error("Gagal mencari printer.");
+                }
+            } catch (err) { 
+                window.showToast("Batal", "error"); 
+            } 
+        };
         
         // Atur Kategori Filter Biasa
-        window.setFilter = function(c) { currentFilter = c; ['semua', 'makanan', 'minuman'].forEach(cat => document.getElementById(`filter-${cat}`).className = cat === c ? "filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-800 text-white shadow-md whitespace-nowrap" : "filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 hover:bg-gray-200 border border-gray-200 whitespace-nowrap"); window.renderProducts(); };
-
+        window.setFilter = function(c) { 
+            currentFilter = c; 
+            ['semua', 'makanan', 'minuman'].forEach(cat => {
+                document.getElementById(`filter-${cat}`).className = cat === c 
+                    ? "filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-800 text-white shadow-md whitespace-nowrap" 
+                    : "filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 hover:bg-gray-200 border border-gray-200 whitespace-nowrap";
+            });
+            window.renderProducts(); 
+        };
     </script>
 </body>
 </html>
