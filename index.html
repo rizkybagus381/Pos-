@@ -44,26 +44,317 @@
         }
         .toast-enter { animation: slideInUp 0.3s ease-out forwards; }
         .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
+
+        /* ==========================================
+           CSS LOGIN PIN CUSTOM (DARK GLOW THEME)
+           ========================================== */
+        .pin-grid {
+            height: 100%;
+            width: 100%;
+            background-image: linear-gradient(to right, #16161a 1px, transparent 1px),
+            linear-gradient(to bottom, #16161a 1px, transparent 1px);
+            background-size: 1rem 1rem;
+            background-position: center center;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            filter: blur(1px);
+        }
+        .poda-white,
+        .poda-border,
+        .poda-darkBorderBg,
+        .poda-glow {
+            max-height: 70px;
+            max-width: 314px;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            overflow: hidden;
+            z-index: -1;
+            border-radius: 12px;
+            filter: blur(3px);
+        }
+        .poda-input {
+            background-color: #010201;
+            border: none;
+            width: 301px;
+            height: 56px;
+            border-radius: 10px;
+            color: white;
+            padding-inline: 59px;
+            font-size: 24px;
+            letter-spacing: 0.3em;
+            text-align: center;
+        }
+        #poda {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .poda-input::placeholder {
+            color: #c0b9c0;
+            letter-spacing: normal;
+            font-size: 16px;
+        }
+        .poda-input:focus {
+            outline: none;
+        }
+        #poda-main:focus-within > #input-mask {
+            display: none;
+        }
+        #input-mask {
+            pointer-events: none;
+            width: 100px;
+            height: 20px;
+            position: absolute;
+            background: linear-gradient(90deg, transparent, black);
+            top: 18px;
+            left: 70px;
+        }
+        #pink-mask {
+            pointer-events: none;
+            width: 30px;
+            height: 20px;
+            position: absolute;
+            background: #cf30aa;
+            top: 10px;
+            left: 5px;
+            filter: blur(20px);
+            opacity: 0.8;
+            transition: all 2s;
+        }
+        #poda-main:hover > #pink-mask {
+            opacity: 0;
+        }
+        .poda-white {
+            max-height: 63px;
+            max-width: 307px;
+            border-radius: 10px;
+            filter: blur(2px);
+        }
+        .poda-white::before {
+            content: "";
+            z-index: -2;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(83deg);
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            filter: brightness(1.4);
+            background-image: conic-gradient(
+                rgba(0, 0, 0, 0) 0%,
+                #a099d8,
+                rgba(0, 0, 0, 0) 8%,
+                rgba(0, 0, 0, 0) 50%,
+                #dfa2da,
+                rgba(0, 0, 0, 0) 58%
+            );
+            transition: all 2s;
+        }
+        .poda-border {
+            max-height: 59px;
+            max-width: 303px;
+            border-radius: 11px;
+            filter: blur(0.5px);
+        }
+        .poda-border::before {
+            content: "";
+            z-index: -2;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(70deg);
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            filter: brightness(1.3);
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            background-image: conic-gradient(
+                #1c191c,
+                #402fb5 5%,
+                #1c191c 14%,
+                #1c191c 50%,
+                #cf30aa 60%,
+                #1c191c 64%
+            );
+            transition: all 2s;
+        }
+        .poda-darkBorderBg {
+            max-height: 65px;
+            max-width: 312px;
+        }
+        .poda-darkBorderBg::before {
+            content: "";
+            z-index: -2;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(82deg);
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            background-image: conic-gradient(
+                rgba(0, 0, 0, 0),
+                #18116a,
+                rgba(0, 0, 0, 0) 10%,
+                rgba(0, 0, 0, 0) 50%,
+                #6e1b60,
+                rgba(0, 0, 0, 0) 60%
+            );
+            transition: all 2s;
+        }
+        #poda:hover > .poda-darkBorderBg::before { transform: translate(-50%, -50%) rotate(262deg); }
+        #poda:hover > .poda-glow::before { transform: translate(-50%, -50%) rotate(240deg); }
+        #poda:hover > .poda-white::before { transform: translate(-50%, -50%) rotate(263deg); }
+        #poda:hover > .poda-border::before { transform: translate(-50%, -50%) rotate(250deg); }
+
+        #poda:focus-within > .poda-darkBorderBg::before { transform: translate(-50%, -50%) rotate(442deg); transition: all 4s; }
+        #poda:focus-within > .poda-glow::before { transform: translate(-50%, -50%) rotate(420deg); transition: all 4s; }
+        #poda:focus-within > .poda-white::before { transform: translate(-50%, -50%) rotate(443deg); transition: all 4s; }
+        #poda:focus-within > .poda-border::before { transform: translate(-50%, -50%) rotate(430deg); transition: all 4s; }
+
+        .poda-glow {
+            overflow: hidden;
+            filter: blur(30px);
+            opacity: 0.4;
+            max-height: 130px;
+            max-width: 354px;
+        }
+        .poda-glow:before {
+            content: "";
+            z-index: -2;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(60deg);
+            position: absolute;
+            width: 999px;
+            height: 999px;
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            background-image: conic-gradient(
+                #000,
+                #402fb5 5%,
+                #000 38%,
+                #000 50%,
+                #cf30aa 60%,
+                #000 87%
+            );
+            transition: all 2s;
+        }
+        #filter-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            max-height: 40px;
+            max-width: 38px;
+            height: 100%;
+            width: 100%;
+            isolation: isolate;
+            overflow: hidden;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #161329, black, #1d1b4b);
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+        .filterBorder {
+            height: 42px;
+            width: 40px;
+            position: absolute;
+            overflow: hidden;
+            top: 7px;
+            right: 7px;
+            border-radius: 10px;
+        }
+        .filterBorder::before {
+            content: "";
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(90deg);
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            filter: brightness(1.35);
+            background-image: conic-gradient(
+                rgba(0, 0, 0, 0),
+                #3d3a4f,
+                rgba(0, 0, 0, 0) 50%,
+                rgba(0, 0, 0, 0) 50%,
+                #3d3a4f,
+                rgba(0, 0, 0, 0) 100%
+            );
+            animation: rotateBg 4s linear infinite;
+        }
+        #poda-main {
+            position: relative;
+        }
+        #search-icon {
+            position: absolute;
+            left: 20px;
+            top: 17px;
+            pointer-events: none;
+        }
+        @keyframes rotateBg {
+            100% {
+                transform: translate(-50%, -50%) rotate(450deg);
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- === LAYAR LOGIN PIN AWAL === -->
-    <div id="pin-overlay" class="fixed inset-0 bg-blue-700 z-[100] flex flex-col items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center transform transition-all">
-            <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <i class="fa-solid fa-lock text-3xl"></i>
+    <!-- === LAYAR LOGIN PIN AWAL (TEMA DARK GLOW) === -->
+    <div id="pin-overlay" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-4 overflow-hidden">
+        <div class="pin-grid"></div>
+        
+        <div class="mb-8 text-center z-10 relative">
+            <div class="w-20 h-20 bg-[#161329] border border-[#3d3a4f] shadow-[0_0_20px_rgba(207,48,170,0.4)] text-[#a099d8] rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-store text-3xl"></i>
             </div>
-            <h2 class="text-2xl font-black text-gray-800 mb-1">KasirKu</h2>
-            <p class="text-gray-500 mb-8 text-sm">Masukkan PIN Keamanan Anda</p>
-            
-            <form id="pin-form" onsubmit="window.checkPin(event)">
-                <input type="password" id="input-pin" class="w-full text-center text-3xl tracking-[0.5em] px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none mb-6 font-mono transition-all" placeholder="••••" required autocomplete="off">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
-                    Buka Kasir <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </form>
+            <h2 class="text-4xl font-black text-white mb-2 tracking-wider drop-shadow-md">KasirKu</h2>
+            <p class="text-[#a099d8] text-sm">Masukkan PIN Keamanan Anda</p>
         </div>
+
+        <form id="pin-form" onsubmit="window.checkPin(event)" class="z-10 relative">
+            <div id="poda">
+                <div class="poda-glow"></div>
+                <div class="poda-darkBorderBg"></div>
+                <div class="poda-darkBorderBg"></div>
+                <div class="poda-darkBorderBg"></div>
+                <div class="poda-white"></div>
+                <div class="poda-border"></div>
+                
+                <div id="poda-main">
+                    <input placeholder="PIN..." type="password" id="input-pin" class="poda-input" required autocomplete="off" />
+                    <div id="input-mask"></div>
+                    <div id="pink-mask"></div>
+                    <div class="filterBorder"></div>
+                    
+                    <button type="submit" id="filter-icon" title="Buka Kasir" class="hover:text-purple-300 transition-colors">
+                        <i class="fa-solid fa-arrow-right text-[#d6d6e6]"></i>
+                    </button>
+                    
+                    <div id="search-icon">
+                        <i class="fa-solid fa-lock text-[#b6a9b7] text-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- === KONTINER UTAMA APLIKASI === -->
@@ -93,10 +384,22 @@
                     <button onclick="window.requestAdminAuth('Pengaturan', window.openSettingsModal)" class="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 transition-all active-scale" title="Pengaturan Toko">
                         <i class="fa-solid fa-gear"></i>
                     </button>
-                    <!-- Proteksi: Butuh Otorisasi untuk Buka Riwayat -->
-                    <button onclick="window.requestAdminAuth('Riwayat', window.openHistoryModal)" class="flex items-center justify-center w-10 h-10 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-all active-scale shadow-sm" title="Riwayat Pesanan">
+
+                    <!-- Proteksi: Butuh Otorisasi untuk Buka Laporan -->
+                    <button onclick="window.requestAdminAuth('Laporan', window.openReportModal)" class="flex items-center justify-center w-10 h-10 rounded-lg text-white bg-indigo-500 hover:bg-indigo-600 transition-all active-scale shadow-sm" title="Laporan Penjualan">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </button>
+
+                    <!-- Proteksi: Butuh Otorisasi untuk Buka Riwayat Hari Ini -->
+                    <button onclick="window.requestAdminAuth('Riwayat Hari Ini', () => window.openHistoryModal('today'))" class="flex items-center justify-center w-10 h-10 rounded-lg text-white bg-teal-500 hover:bg-teal-600 transition-all active-scale shadow-sm" title="Riwayat Hari Ini">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </button>
+
+                    <!-- Proteksi: Butuh Otorisasi untuk Buka Semua Riwayat -->
+                    <button onclick="window.requestAdminAuth('Semua Riwayat', () => window.openHistoryModal('all'))" class="flex items-center justify-center w-10 h-10 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-all active-scale shadow-sm" title="Semua Riwayat Pesanan">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </button>
+                    
                     <button id="btn-bluetooth" onclick="window.connectBluetooth()" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm active-scale text-sm">
                         <i id="icon-bluetooth" class="fa-brands fa-bluetooth-b"></i>
                         <span id="text-bluetooth">Printer</span>
@@ -160,8 +463,8 @@
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
                 <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-cash-register text-blue-600 mr-2"></i> Pembayaran</h3>
-                <button onclick="window.closePaymentModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full">
-                    <i class="fa-solid fa-xmark text-xl"></i>
+                <button type="button" onclick="window.closePaymentModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors active-scale">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
@@ -213,7 +516,9 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden max-h-[90dvh] flex flex-col">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50 flex-none">
                 <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-gear text-blue-600 mr-2"></i> Pengaturan Toko & Keamanan</h3>
-                <button onclick="window.closeSettingsModal()" class="text-gray-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQtext-xl"></i></button>
+                <button type="button" onclick="window.closeSettingsModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors active-scale">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
             <div class="overflow-y-auto flex-1 p-5">
                 <form id="form-settings" onsubmit="window.saveSettings(event)" class="space-y-4">
@@ -246,7 +551,9 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90dvh]">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50 flex-none">
                 <h3 class="font-bold text-lg text-gray-800">Tambah Menu Baru</h3>
-                <button onclick="window.closeModal()" class="text-gray-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQtext-xl"></i></button>
+                <button type="button" onclick="window.closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors active-scale">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
             <div class="overflow-y-auto flex-1 p-5">
                 <form id="form-add" onsubmit="window.handleAddProduct(event)" class="space-y-4">
@@ -287,8 +594,10 @@
     <div id="modal-history" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-[70] p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90dvh]">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50 flex-none">
-                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-clock-rotate-left text-purple-600 mr-2"></i> Riwayat Pesanan</h3>
-                <button onclick="window.closeHistoryModal()" class="text-gray-42EYHgEzWEdjJgYKAu8VjC4DohVYUMbvZ6Ua45MgSaYBTFv3725expKB69YsjM6Utj99E6Sn3LpcxQ4mNrwfrJLM5NGbWiQtext-xl"></i></button>
+                <h3 id="history-modal-title" class="font-bold text-lg text-gray-800"><i class="fa-solid fa-clock-rotate-left text-purple-600 mr-2"></i> Riwayat Pesanan</h3>
+                <button type="button" onclick="window.closeHistoryModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors active-scale">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
             <div class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-3" id="history-list">
                 <div class="text-center text-gray-400 py-10">Memuat riwayat...</div>
@@ -297,6 +606,41 @@
                 <div class="flex justify-between font-bold text-gray-800 text-lg">
                     <span>Total Pendapatan:</span>
                     <span id="history-total-revenue" class="text-green-600">Rp 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === MODAL LAPORAN === -->
+    <div id="modal-report" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-[70] p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90dvh]">
+            <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50 flex-none">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i> Laporan Penjualan</h3>
+                <button type="button" onclick="window.closeReportModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors active-scale">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
+                <!-- Highlight Summary -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-teal-50 p-4 rounded-xl border border-teal-100">
+                        <p class="text-teal-600 font-semibold text-xs mb-1">Pendapatan Hari Ini</p>
+                        <h2 id="report-today-rev" class="text-xl font-black text-teal-800">Rp 0</h2>
+                        <p id="report-today-trx" class="text-xs text-teal-600 mt-1">0 Transaksi</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                        <p class="text-purple-600 font-semibold text-xs mb-1">Total Pendapatan</p>
+                        <h2 id="report-total-rev" class="text-xl font-black text-purple-800">Rp 0</h2>
+                        <p id="report-total-trx" class="text-xs text-purple-600 mt-1">0 Transaksi</p>
+                    </div>
+                </div>
+                
+                <!-- Top Items -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <h4 class="font-bold text-gray-700 text-sm mb-3">Menu Terlaris (5 Teratas)</h4>
+                    <div id="report-top-items" class="space-y-2">
+                        <!-- Top items rendered here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -380,6 +724,9 @@
         let cart = [];
         let currentFilter = 'semua';
         let printerCharacteristic = null;
+        
+        // Mode filter untuk Riwayat Modal
+        window.currentHistoryFilter = 'all'; 
 
         let storeName = 'KASIRKU PINTAR';
         let storeAddress = 'Jl. Contoh Alamat No. 123';
@@ -525,8 +872,12 @@
                 snapshot.forEach(doc => { ordersHistory.push(doc.data()); });
                 ordersHistory.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 
+                // Render modal history atau laporan jika sedang dibuka
                 if(!document.getElementById('modal-history').classList.contains('hidden')){
                     window.renderHistory();
+                }
+                if(!document.getElementById('modal-report').classList.contains('hidden')){
+                    window.renderReport();
                 }
             }, (error) => {
                 console.error("History DB Error:", error);
@@ -786,11 +1137,18 @@
         };
 
         // ==========================================
-        // 6. HISTORY, VOID, SETTINGS & UPLOAD
+        // 6. HISTORY, LAPORAN, VOID, SETTINGS & UPLOAD
         // ==========================================
-        window.openHistoryModal = function() { 
-             document.getElementById('modal-history').classList.remove('hidden'); 
-             window.renderHistory();
+        window.openHistoryModal = function(filter = 'all') { 
+            window.currentHistoryFilter = filter;
+            const titleEl = document.getElementById('history-modal-title');
+            if (filter === 'today') {
+                titleEl.innerHTML = '<i class="fa-solid fa-calendar-day text-teal-600 mr-2"></i> Riwayat Hari Ini';
+            } else {
+                titleEl.innerHTML = '<i class="fa-solid fa-clock-rotate-left text-purple-600 mr-2"></i> Semua Riwayat';
+            }
+            document.getElementById('modal-history').classList.remove('hidden'); 
+            window.renderHistory();
         };
         window.closeHistoryModal = function() { document.getElementById('modal-history').classList.add('hidden'); };
 
@@ -801,10 +1159,18 @@
                 listDiv.innerHTML = '';
                 let totalRevenue = 0;
 
-                if (!ordersHistory || ordersHistory.length === 0) {
+                let filteredOrders = ordersHistory;
+                if (window.currentHistoryFilter === 'today') {
+                    const todayStr = new Date().toLocaleDateString('id-ID');
+                    filteredOrders = ordersHistory.filter(o => {
+                        return new Date(o.timestamp || Date.now()).toLocaleDateString('id-ID') === todayStr;
+                    });
+                }
+
+                if (!filteredOrders || filteredOrders.length === 0) {
                     listDiv.innerHTML = `<div class="text-center text-gray-400 py-10"><p>Belum ada riwayat penjualan.</p></div>`;
                 } else {
-                    ordersHistory.forEach(order => {
+                    filteredOrders.forEach(order => {
                         const isVoided = order.status === 'voided';
                         if (!isVoided) totalRevenue += (order.total || 0); 
 
@@ -844,6 +1210,70 @@
                 }
                 revenueEl.innerText = formatRupiah(totalRevenue);
             } catch(e) { console.error(e); window.showToast("Gagal memuat history", "error"); }
+        };
+
+        // Render Laporan
+        window.openReportModal = function() {
+            document.getElementById('modal-report').classList.remove('hidden');
+            window.renderReport();
+        };
+        window.closeReportModal = function() {
+            document.getElementById('modal-report').classList.add('hidden');
+        };
+
+        window.renderReport = function() {
+            let todayRev = 0, totalRev = 0, todayTrx = 0, totalTrx = 0;
+            const todayStr = new Date().toLocaleDateString('id-ID');
+            const itemSales = {};
+
+            ordersHistory.forEach(o => {
+                if (o.status !== 'voided') {
+                    totalRev += (o.total || 0);
+                    totalTrx++;
+                    
+                    if (new Date(o.timestamp || Date.now()).toLocaleDateString('id-ID') === todayStr) {
+                        todayRev += (o.total || 0);
+                        todayTrx++;
+                    }
+
+                    if (o.items && Array.isArray(o.items)) {
+                        o.items.forEach(i => {
+                            if (!itemSales[i.name]) itemSales[i.name] = { qty: 0, revenue: 0 };
+                            itemSales[i.name].qty += (i.qty || 1);
+                            itemSales[i.name].revenue += ((i.qty || 1) * (i.price || 0));
+                        });
+                    }
+                }
+            });
+
+            document.getElementById('report-today-rev').innerText = formatRupiah(todayRev);
+            document.getElementById('report-today-trx').innerText = `${todayTrx} Transaksi`;
+            document.getElementById('report-total-rev').innerText = formatRupiah(totalRev);
+            document.getElementById('report-total-trx').innerText = `${totalTrx} Transaksi`;
+
+            // Hitung 5 Menu Terlaris
+            const topItems = Object.keys(itemSales)
+                .map(k => ({ name: k, ...itemSales[k] }))
+                .sort((a, b) => b.qty - a.qty)
+                .slice(0, 5);
+
+            const topItemsDiv = document.getElementById('report-top-items');
+            if (topItems.length === 0) {
+                topItemsDiv.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Belum ada data penjualan.</p>';
+            } else {
+                topItemsDiv.innerHTML = topItems.map((item, index) => `
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-gray-400 w-4">${index + 1}.</span>
+                            <span class="font-semibold text-gray-700 text-sm">${item.name}</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-blue-600 text-xs">${item.qty} Terjual</p>
+                            <p class="text-[10px] text-gray-500">${formatRupiah(item.revenue)}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
         };
 
         window.executeVoidOrderDirect = async function(orderId) { 
