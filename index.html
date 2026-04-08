@@ -314,6 +314,161 @@
                 transform: translate(-50%, -50%) rotate(450deg);
             }
         }
+
+        /* ==========================================
+           CSS LAPORAN PENJUALAN (CRYPTO CARD THEME)
+           ========================================== */
+        .crypto-card {
+            max-width: 360px;
+            width: 90%;
+            padding: 20px;
+            border-radius: 35px;
+            background: #000;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        .crypto-card .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .crypto-card .logo {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .crypto-card .open {
+            font-size: 0.85em;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .crypto-card .open:hover {
+            color: #fff;
+        }
+        .crypto-switch {
+            position: relative;
+            display: flex;
+            background: #222;
+            border-radius: 20px;
+            padding: 4px;
+            gap: 8px;
+            margin-bottom: 16px;
+            user-select: none;
+            border: none;
+        }
+        .crypto-switch input {
+            display: none;
+        }
+        .crypto-switch label {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            border-radius: 16px;
+            cursor: pointer;
+            color: #cccccc;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: color 0.3s;
+            font-size: 0.75em;
+            z-index: 2;
+        }
+        .crypto-switch input:checked + label {
+            color: #ffffff;
+        }
+        .crypto-switch .slider {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            width: calc((100% - 24px) / 4);
+            background: rgba(255, 255, 255, 0.4);
+            -webkit-backdrop-filter: blur(1px);
+            backdrop-filter: blur(0.5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 -2px 4px rgba(255, 255, 255, 0.2);
+        }
+        .crypto-switch input:hover + label {
+            color: #ffffff;
+        }
+        
+        #tab-today:checked ~ .slider { transform: translateX(0%); }
+        #tab-total:checked ~ .slider { transform: translateX(105%); }
+        #tab-top:checked ~ .slider { transform: translateX(214%); }
+        #tab-avg:checked ~ .slider { transform: translateX(323%); }
+
+        .price-infos {
+            margin-bottom: 16px;
+        }
+        .price-info {
+            display: none;
+        }
+        .crypto-card:has(#tab-today:checked) .price-info.today,
+        .crypto-card:has(#tab-total:checked) .price-info.total,
+        .crypto-card:has(#tab-top:checked) .price-info.top,
+        .crypto-card:has(#tab-avg:checked) .price-info.avg {
+            display: block;
+        }
+
+        .price-info .price {
+            font-size: 1.6em;
+            font-weight: bold;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .price-info .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+        }
+        .price-info .change {
+            color: #0f0;
+            font-weight: bold;
+        }
+
+        .chart {
+            height: 90px;
+            background: #1b1b1b;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+        .chart svg {
+            width: 100%;
+            height: 100%;
+            display: none;
+            transform: translateX(2px) scale(1.05);
+        }
+        .chart path {
+            stroke: #0f0;
+            stroke-width: 0.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: draw 3s forwards;
+            fill: rgba(0, 255, 0, 0.2);
+        }
+        
+        .crypto-card:has(#tab-today:checked) .chart #chart-today,
+        .crypto-card:has(#tab-total:checked) .chart #chart-total,
+        .crypto-card:has(#tab-top:checked) .chart #chart-top,
+        .crypto-card:has(#tab-avg:checked) .chart #chart-avg {
+            display: block;
+        }
+
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
     </style>
 </head>
 <body>
@@ -611,39 +766,89 @@
         </div>
     </div>
 
-    <!-- === MODAL LAPORAN === -->
-    <div id="modal-report" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-[70] p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90dvh]">
-            <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50 flex-none">
-                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i> Laporan Penjualan</h3>
-                <button type="button" onclick="window.closeReportModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors active-scale">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <!-- === MODAL LAPORAN PENJUALAN (CRYPTO CARD THEME) === -->
+    <div id="modal-report" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center z-[70] p-4">
+        
+        <div class="crypto-card">
+            <div class="header">
+                <span class="logo"><i class="fa-solid fa-chart-line mr-2"></i>Laporan Kasir</span>
+                <span class="open" onclick="window.closeReportModal()"><i class="fa-solid fa-xmark mr-1"></i>Tutup</span>
             </div>
-            <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
-                <!-- Highlight Summary -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-teal-50 p-4 rounded-xl border border-teal-100">
-                        <p class="text-teal-600 font-semibold text-xs mb-1">Pendapatan Hari Ini</p>
-                        <h2 id="report-today-rev" class="text-xl font-black text-teal-800">Rp 0</h2>
-                        <p id="report-today-trx" class="text-xs text-teal-600 mt-1">0 Transaksi</p>
-                    </div>
-                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                        <p class="text-purple-600 font-semibold text-xs mb-1">Total Pendapatan</p>
-                        <h2 id="report-total-rev" class="text-xl font-black text-purple-800">Rp 0</h2>
-                        <p id="report-total-trx" class="text-xs text-purple-600 mt-1">0 Transaksi</p>
+
+            <fieldset class="crypto-switch">
+                <input type="radio" id="tab-today" name="report-tab" checked />
+                <label for="tab-today"> HARI INI </label>
+
+                <input type="radio" id="tab-total" name="report-tab" />
+                <label for="tab-total"> TOTAL </label>
+
+                <input type="radio" id="tab-top" name="report-tab" />
+                <label for="tab-top"> TOP #1 </label>
+
+                <input type="radio" id="tab-avg" name="report-tab" />
+                <label for="tab-avg"> RATA-RATA </label>
+
+                <div class="slider"></div>
+            </fieldset>
+
+            <div class="price-infos">
+                <!-- Info Hari Ini -->
+                <div class="price-info today">
+                    <div class="price" id="report-today-rev">Rp 0</div>
+                    <div class="stats">
+                        <span class="amount" id="report-today-trx">0 Transaksi</span>
+                        <span class="change">+ Hari ini</span>
                     </div>
                 </div>
-                
-                <!-- Top Items -->
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <h4 class="font-bold text-gray-700 text-sm mb-3">Menu Terlaris (5 Teratas)</h4>
-                    <div id="report-top-items" class="space-y-2">
-                        <!-- Top items rendered here -->
+
+                <!-- Info Total -->
+                <div class="price-info total">
+                    <div class="price" id="report-total-rev">Rp 0</div>
+                    <div class="stats">
+                        <span class="amount" id="report-total-trx">0 Transaksi</span>
+                        <span class="change">+ Keseluruhan</span>
                     </div>
                 </div>
+
+                <!-- Info Menu Terlaris #1 -->
+                <div class="price-info top">
+                    <div class="price text-[22px] mt-1" id="report-top-name">Belum ada data</div>
+                    <div class="stats mt-2">
+                        <span class="amount" id="report-top-qty">0 Terjual</span>
+                        <span class="change" id="report-top-rev">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Info Rata-rata -->
+                <div class="price-info avg">
+                    <div class="price" id="report-avg-rev">Rp 0</div>
+                    <div class="stats">
+                        <span class="amount" id="report-avg-trx">Rata-rata / Transaksi</span>
+                        <span class="change">Stabil</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area Grafik Abstrak (Desain Bawaan) -->
+            <div class="chart">
+                <svg id="chart-today" viewBox="0 0 100 50" preserveAspectRatio="none">
+                    <path d="M0,23 L75,18 L80,20 L85,15 L90,18 L95,12 L100,15 L 100 190"></path>
+                </svg>
+
+                <svg id="chart-total" viewBox="0 0 100 40" preserveAspectRatio="none">
+                    <path d="M0,15 L75,18 L80,14 L85,16 L90,12 L95,14 L100,10 L 100 190"></path>
+                </svg>
+
+                <svg id="chart-top" viewBox="0 0 100 38" preserveAspectRatio="none">
+                    <path d="M0,35 L5,33 L10,31 L15,29 L20,27 L25,25 L30,23 L35,21 L40,19 L45,18 L50,16 L55,15 L60,14 L65,12 L70,11 L75,10 L80,9 L85,8 L90,7 L95,6 L100,5 L 100 190"></path>
+                </svg>
+
+                <svg id="chart-avg" viewBox="0 0 100 50" preserveAspectRatio="none" fill="none">
+                    <path d="M0,25 L5,25 L10,25 L15,25 L20,25 L25,25 L30,25 L35,25 L40,25 L45,25 L50,25 L55,25 L60,25 L65,25 L70,25 L75,25 L80,25 L85,25 L90,25 L95,25 L100,25 L 100 190"></path>
+                </svg>
             </div>
         </div>
+
     </div>
 
     <!-- === MODAL OTORISASI PROTEKSI KEAMANAN (PIN) === -->
@@ -1246,34 +1451,30 @@
                 }
             });
 
+            // Update Tab 1 & 2 (Hari Ini & Total)
             document.getElementById('report-today-rev').innerText = formatRupiah(todayRev);
             document.getElementById('report-today-trx').innerText = `${todayTrx} Transaksi`;
             document.getElementById('report-total-rev').innerText = formatRupiah(totalRev);
             document.getElementById('report-total-trx').innerText = `${totalTrx} Transaksi`;
 
-            // Hitung 5 Menu Terlaris
+            // Update Tab 3 (Top #1 Menu Terlaris)
             const topItems = Object.keys(itemSales)
                 .map(k => ({ name: k, ...itemSales[k] }))
-                .sort((a, b) => b.qty - a.qty)
-                .slice(0, 5);
+                .sort((a, b) => b.qty - a.qty);
 
-            const topItemsDiv = document.getElementById('report-top-items');
-            if (topItems.length === 0) {
-                topItemsDiv.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Belum ada data penjualan.</p>';
+            if (topItems.length > 0) {
+                document.getElementById('report-top-name').innerText = topItems[0].name;
+                document.getElementById('report-top-qty').innerText = `${topItems[0].qty} Terjual`;
+                document.getElementById('report-top-rev').innerText = formatRupiah(topItems[0].revenue);
             } else {
-                topItemsDiv.innerHTML = topItems.map((item, index) => `
-                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-gray-400 w-4">${index + 1}.</span>
-                            <span class="font-semibold text-gray-700 text-sm">${item.name}</span>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-bold text-blue-600 text-xs">${item.qty} Terjual</p>
-                            <p class="text-[10px] text-gray-500">${formatRupiah(item.revenue)}</p>
-                        </div>
-                    </div>
-                `).join('');
+                document.getElementById('report-top-name').innerText = "Belum ada data";
+                document.getElementById('report-top-qty').innerText = "0 Terjual";
+                document.getElementById('report-top-rev').innerText = "Rp 0";
             }
+
+            // Update Tab 4 (Rata-rata per Transaksi)
+            const avgRev = totalTrx > 0 ? (totalRev / totalTrx) : 0;
+            document.getElementById('report-avg-rev').innerText = formatRupiah(avgRev);
         };
 
         window.executeVoidOrderDirect = async function(orderId) { 
